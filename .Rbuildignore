@@ -3,3 +3,4 @@
 ^dev$
 ^\.here$
 ^LICENSE\.md$
+^README\.Rmd$

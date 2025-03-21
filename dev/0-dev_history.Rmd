@@ -17,7 +17,7 @@ fusen::fill_description(
   pkg = here::here(),
   fields = list(
     Title = "MAHERY Cohort Harmonization",
-    Description = "This package establishes a pipeline that harmonizes the MAHERY data across disparate sources and produces a dataset that defines the MAHERY Cohort.",
+    Description = "This package establishes a pipeline that harmonizes the MAHERY cohort data across disparate sources and produces a dataset that defines the MAHERY Cohort for future studies.",
     `Authors@R` = c(
       person("Tinashe", "Tapera", email = "ttapera@hsph.harvard.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0000-0000-0000"))
     )
