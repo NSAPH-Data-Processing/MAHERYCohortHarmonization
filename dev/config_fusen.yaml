@@ -17,3 +17,18 @@ flat_full.Rmd:
     overwrite: ask
     clean: ask
     codecov: false
+flat_tracking_inputs.Rmd:
+  path: dev/flat_tracking_inputs.Rmd
+  state: active
+  R: R/authenticate_google_drive.R
+  tests: tests/testthat/test-authenticate_google_drive.R
+  vignettes: vignettes/tracking-input-data.Rmd
+  inflate:
+    flat_file: dev/flat_tracking_inputs.Rmd
+    vignette_name: Tracking Input Data
+    open_vignette: true
+    check: true
+    document: true
+    overwrite: ask
+    clean: ask
+    codecov: false

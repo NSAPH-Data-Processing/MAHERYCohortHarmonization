@@ -1,0 +1,7 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+authenticate_google_drive|function|8ea81be87ccf059b
+my_median|function|d311d35c99082065
+sub_median|function|b7edf9b2a71ee8bb
+.Random.seed|object|92b81a72efa7910f
+my_other_median|function|db108af6e06aa435
+auth|stem|445854964aee0763|0161787e8a224ad1|65c2ad79a17e0cf8|1926614493||t20172.1205230382s|s48b|48|rds|local|vector|||0.893||

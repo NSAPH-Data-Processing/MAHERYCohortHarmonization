@@ -1,0 +1,133 @@
+---
+title: "Tracking Input Data"
+author: "Tinashe M. Tapera"
+output: rmarkdown::html_vignette
+editor_options: 
+  chunk_output_type: console
+# vignette: >
+#   %\VignetteIndexEntry{Tracking Input Data}
+#   %\VignetteEngine{knitr::rmarkdown}
+#   %\VignetteEncoding{UTF-8}
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+```{r development-load}
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+```
+
+# Tracking Inputs
+
+In this notebook, we're developing functions to track all of the input data. Importantly,
+this data is stored on Google Drive and must not be shared publicly on the internet,
+so we will need to use programmatic credentials to access it.
+
+Let's first create a function that will log us in to google drive with the appropriate credentials.
+For this, we'll use the `googledrive` package from `tidyverse`.
+```{r development-tracking_inputs}
+# Prepare the code of your function here
+
+# necessary libraries
+library(googledrive)
+```
+
+We can start the process of authorization using the `drive_auth()` function. This requires
+access to the a special JSON file that contains the credentials for the google drive account.
+
+To enable non-interactive access to Google Drive from this R package, we use a _Google Cloud 
+service account_ for authentication. This allows scripts and functions to interact with 
+Google Drive without requiring manual sign-in or browser-based authentication. It’s particularly
+useful for automated workflows, scheduled tasks, or when deploying the package in cloud 
+environments (e.g., on a server like `FASRC`). The service account acts like
+a dummy user with its own credentials, and it can be granted access to specific files or 
+folders in the CSPH drives. Access to the service account can be controlled via sharing
+permissions just like any human Google Drive user.
+
+To set this up, the service account was created via the Google Cloud Console under
+a project with the Google Drive API enabled. A JSON key was generated and 
+downloaded — this file contains the credentials used to authenticate in R. 
+Any Google Drive resources the package needs to access must be explicitly shared with 
+the service account’s email (in this case, `data-pipeline@harvard-csph-driveauth.iam.gserviceaccount.com`).
+Once shared, the pipeline uses the `googledrive` package in R to authenticate via 
+`drive_auth(path = "path/to/key.json")`, allowing Drive operations to run seamlessly.
+
+This authentication method ensures that all users of this package (or future maintainers)
+can use a consistent, secured credential file for Drive access. To maintain this setup,
+keep the JSON key file in a protected location, and do not commit it to version control. 
+If the key ever needs to be regenerated (e.g., due to compromise or rotation), the same
+process above can be followed to create a new one.
+
+## Authenticating with Google Drive
+
+If you have the authentication file, you can simply point to it with your `drive_auth()` function in
+an interactive session. If this is successful, you should be able to access the Google Drive files
+from R with `drive_find()`.
+
+
+```{r, eval=FALSE}
+path_to_auth <- "path/to/your/auth.json"
+drive_auth(path = path_to_auth)
+drive_find()
+```
+
+In a non-interactive session, make sure to set the environment variable with `.Renviron`.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(googledrive)
+path_to_auth <- Sys.getenv("GOOGLE_DRIVE_AUTH_JSON")
+drive_auth(path = path_to_auth)
+drive_find() # does not print anything in vignettes but will print interactively
+```
+
+```{r function-authenticate_google_drive}
+#' authenticate_google_drive Title
+#'
+#' Authenticate with Google Drive using the appropriate credentials
+#' The pipeline will not run if this step is not successful.
+#' 
+#' @importFrom googledrive drive_auth
+#' @return TRUE if the authentication was successful
+#' @export
+#'
+#' @examples
+#' authenticate_google_drive()
+authenticate_google_drive <- function() {
+  
+  # Load the path to the authentication file
+  path_to_auth <- Sys.getenv("GOOGLE_DRIVE_AUTH_JSON")
+
+  tryCatch({
+    
+    drive_auth(path = path_to_auth)
+    return(TRUE)
+
+  }, error = function(e) {
+    message("Authentication failed. Please check the path to the authentication file.")
+    message(e)
+    return(FALSE)
+  })
+
+}
+```
+
+```{r examples-authenticate_google_drive}
+authenticate_google_drive()
+```
+
+```{r tests-tracking_inputs}
+test_that("Google authentication works", {
+  expect_true(authenticate_google_drive())
+})
+```
+
+We can add this to the beginning of our `targets` pipeline.
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+fusen::inflate(flat_file = "dev/flat_tracking_inputs.Rmd", vignette_name = "Tracking Input Data")
+```
+
