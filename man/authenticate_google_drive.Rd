@@ -6,9 +6,6 @@
 \usage{
 authenticate_google_drive()
 }
-\arguments{
-\item{path_to_auth}{The path to the authentication file}
-}
 \value{
 TRUE if the authentication was successful
 }

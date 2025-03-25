@@ -6,7 +6,6 @@
 #' The pipeline will not run if this step is not successful.
 #' 
 #' @importFrom googledrive drive_auth
-#' @param path_to_auth The path to the authentication file
 #' @return TRUE if the authentication was successful
 #' @export
 #'

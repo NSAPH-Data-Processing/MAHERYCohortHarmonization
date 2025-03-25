@@ -96,3 +96,13 @@ authenticate_google_drive()
 
 We can add this to the beginning of our `targets` pipeline.
 
+## Northeast Data
+
+<div class="warning">
+  <strong>Warning:</strong> <italic>DO NOT</italic> use file ID identifiers in rendered HTML vignettes,
+  as they can be used to access the Google Drive if sharing is enabled. This is a security risk. Instead,
+  use the file name and `drive_find(pattern = [REGEX])` to reference files.
+</div>
+
+Now that we have access to the Google Drive, we can start tracking the input data. We'll start with the Northeast data.
+
