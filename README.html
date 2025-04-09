@@ -691,8 +691,8 @@ directory using <code>fusen</code>.</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">tar_make</span>()</span></code></pre></div>
 <p>Here is the current state of the pipeline:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>network <span class="ot">&lt;-</span> <span class="fu">tar_network</span>()</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-  checked: 1 | outdated: 0\  checked: 2 | outdated: 0</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; |/ </span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\  checked: 1 | outdated: 0|  checked: 2 | outdated: 0</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; /- </span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co"># Optional: filter out internal targets like `.Random.seed`</span></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>vertices <span class="ot">&lt;-</span> network<span class="sc">$</span>vertices <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">&quot;^</span><span class="sc">\\</span><span class="st">.&quot;</span>, name))</span>
@@ -718,7 +718,7 @@ directory using <code>fusen</code>.</p>
 <span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>svg_string <span class="ot">&lt;-</span> <span class="fu">export_svg</span>(graph)</span>
 <span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="fu">writeLines</span>(svg_string, svg_path)</span></code></pre></div>
 <figure>
-<img role="img" aria-label="Pipeline Graph" src="man/figures/pipeline-dag.png" alt="Pipeline Graph" />
+<img role="img" aria-label="Pipeline Graph" src="man/figures/pipeline-dag.svg" alt="Pipeline Graph" />
 <figcaption aria-hidden="true">Pipeline Graph</figcaption>
 </figure>
 
