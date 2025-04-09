@@ -116,8 +116,8 @@ Here is the current state of the pipeline:
 
 ``` r
 network <- tar_network()
-#> -\|/-\|/-\|/-\|/-\|/-\|/-\  checked: 1 | outdated: 0|  checked: 2 | outdated: 0
-#> /- 
+#> -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|  checked: 1 | outdated: 0/  checked: 2 | outdated: 0
+#> -\ 
 
 # Optional: filter out internal targets like `.Random.seed`
 vertices <- network$vertices %>% filter(!grepl("^\\.", name))
@@ -145,6 +145,6 @@ writeLines(svg_string, svg_path)
 ```
 
 <figure>
-<img src="man/figures/pipeline-dag.svg" alt="Pipeline Graph" />
+<img src="man/figures/pipeline_dag.svg" alt="Pipeline Graph" />
 <figcaption aria-hidden="true">Pipeline Graph</figcaption>
 </figure>

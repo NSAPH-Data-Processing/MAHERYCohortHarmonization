@@ -108,4 +108,4 @@ svg_string <- export_svg(graph)
 writeLines(svg_string, svg_path)
 ```
 
-![Pipeline Graph](man/figures/pipeline-dag.svg)
+![Pipeline Graph](man/figures/pipeline_dag.svg)
