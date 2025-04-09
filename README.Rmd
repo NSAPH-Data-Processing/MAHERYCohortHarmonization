@@ -81,6 +81,11 @@ tar_make()
 Here is the current state of the pipeline:
 
 ```{r}
+library(targets)
+library(DiagrammeR)
+library(DiagrammeRsvg)
+library(rsvg)
+library(dplyr)
 network <- tar_network()
 
 # Optional: filter out internal targets like `.Random.seed`
