@@ -53,9 +53,20 @@ tar_source()
 
 # Replace the target list below with your own:
 list(
+
+  # First, we check that we have secure access to google drive
   tar_target(
     name = secure_access_true,
     command = authenticate_google_drive()
-    # format = "qs" # Efficient storage for general data objects.
+  ),
+
+  # Next, we create the paths for the data files
+  tar_target(
+    name = data_directory_ready,
+    command = {
+      if(secure_access_true){
+        create_datapaths()
+      }
+    }
   )
 )

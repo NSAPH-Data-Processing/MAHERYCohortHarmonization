@@ -2,7 +2,7 @@
 % Please edit documentation in R/authenticate_google_drive.R
 \name{authenticate_google_drive}
 \alias{authenticate_google_drive}
-\title{authenticate_google_drive Title}
+\title{authenticate_google_drive}
 \usage{
 authenticate_google_drive()
 }
@@ -14,6 +14,5 @@ Authenticate with Google Drive using the appropriate credentials
 The pipeline will not run if this step is not successful.
 }
 \examples{
-authenticate_google_drive()
 authenticate_google_drive()
 }
