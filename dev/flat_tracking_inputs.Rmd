@@ -412,6 +412,12 @@ openSRP_dict <- read_excel(dat$local_path)
 head(openSRP_dict)
 ```
 
+#### Column by Column
+
+Let's investigate all of the columns in the dataset.
+
+
+
 Let's start with addressing column types:
 
 ```{r}

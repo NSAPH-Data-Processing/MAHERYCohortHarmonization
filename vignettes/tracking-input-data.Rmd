@@ -217,6 +217,12 @@ head(openSRP_dict)
 ```
 
 
+#### Column by Column
+
+Let's investigate all of the columns in the dataset.
+
+
+
 Let's start with addressing column types:
 ```{r}
 openSRP_ <- clean_names(openSRP)
