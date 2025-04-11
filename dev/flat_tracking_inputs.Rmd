@@ -384,6 +384,11 @@ download_to_local <- function(f_regex, download_dir) {
   # Construct the full path for the local file
   local_path <- file.path(download_dir, file_name)
   
+  if(file.exists(local_path)) {
+    message("File already exists locally: ", local_path)
+    return(local_path)
+  }
+
   # Download the file to the specified path
   drive_download(as_id(file_info$id), path = local_path, overwrite = FALSE)
   

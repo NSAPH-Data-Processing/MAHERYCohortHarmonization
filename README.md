@@ -121,13 +121,21 @@ library(DiagrammeRsvg)
 library(rsvg)
 #> Linking to librsvg 2.42.7
 library(dplyr)
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
 network <- tar_network()
-#> -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/renv 1.1.4 was loaded from project library, but this project is configured to use renv 1.1.3.
+#> -\|/-\renv 1.1.4 was loaded from project library, but this project is configured to use renv 1.1.3.
 #> - Use `renv::record("renv@1.1.4")` to record renv 1.1.4 in the lockfile.
 #> - Use `renv::restore(packages = "renv")` to install renv 1.1.3 into the project library.
-#> -\|/-\|/-\|/-\|/-\|/-\|/-\|/- The project is out-of-sync -- use `renv::status()` for details.
-#> -\|/-\|/-\|  checked: 1 | outdated: 0/  checked: 11 | outdated: 0
-#> -\ 
+#> |/-\|/-\|/-\|/-\|/-\|- The project is out-of-sync -- use `renv::status()` for details.
+#> /-\|/-\|/-  checked: 1 | outdated: 0\  checked: 11 | outdated: 5
+#> |/ 
 
 # Optional: filter out internal targets like `.Random.seed`
 vertices <- network$vertices %>% filter(!grepl("^\\.", name))

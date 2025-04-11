@@ -127,7 +127,10 @@ list(
   tar_target(
     name = raw_files,
     command = {
+      
+      invisible(guard_pipeline_freeze)
       auth_status <- authenticate_google_drive()
+      
       data_files %>%
         mutate(output_path = map(regex, download_to_local, download_dir = here("data", "raw"))) %>%
         unnest(output_path)
