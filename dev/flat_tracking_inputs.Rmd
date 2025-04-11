@@ -352,83 +352,68 @@ mahery_input_files <- function(freeze_date = mdy("01-04-2025")){
 }
 ```
 
-With this in mind, we can likely dedicate one section to each of the files,
+# download_to_local
+    
+```{r development-download_to_local}
+# You can prepare the code of the download_to_local() function here
+```
+  
+```{r function-download_to_local}
+#' download_to_local
+#' 
+#' Download the google drive file to local storage
+#' 
+#' @importFrom googledrive drive_find drive_download
+#' @importFrom dplyr pull
+#' 
+#' @return The path to the downloaded file
+#' 
+#' @export
+download_to_local <- function(f_regex, download_dir) {
+  
+  # Find the file on Google Drive
+  file_info <- drive_find(f_regex, n_max = 1)
+  
+  if (nrow(file_info) == 0) {
+    stop("No file found matching the regex: ", f_regex)
+  }
+  
+  # Extract the file name from Google Drive metadata
+  file_name <- file_info$name
+  
+  # Construct the full path for the local file
+  local_path <- file.path(download_dir, file_name)
+  
+  # Download the file to the specified path
+  drive_download(as_id(file_info$id), path = local_path, overwrite = FALSE)
+  
+  if (!file.exists(local_path)) {
+    stop("File not downloaded successfully.")
+  } else {
+    message("File downloaded successfully to: ", local_path)
+  }
+  
+  return(local_path)
+}
+```
+  
+```{r example-download_to_local}
+authenticate_google_drive()
+test_file <- "openSRP_dictionary.xlsx"
+fpath <- download_to_local(test_file, here::here())
+file.exists(fpath)
+file.remove(fpath)
+```
+  
+```{r tests-download_to_local}
+test_that("download_to_local works", {
+  expect_true(inherits(download_to_local, "function"))
+})
+```
+  
+
+With this in mind, we can likely dedicate a section to each of the files,
 using a function to track each one.
-
-### 2018
-
-To start, we read in the 2018 data:
-
-```{r}
-library(dplyr)
-```
-
-```{r}
-drive_find(pattern = "openSRP_data_2018*") %>%
-  select(-id)
-```
-
-Since it's an xlsx, we'll need to use the appropriate library:
-
-```{r}
-library(readxl)
-library(here)
-```
-
-```{r}
-drive_find(pattern = "openSRP_data_2018*") %>%
-  drive_download(path = here("data", "raw", "openSRP_data_2018.xlsx"), overwrite=TRUE) -> dat
-
-openSRP <- read_excel(dat$local_path)
-
-#skimr is a great way to look at the data without
-#having to print the whole thing and reveal PHI
-skimr::skim(openSRP)
-```
-
-There are loads of columns:
-
-```{r}
-names(openSRP)
-```
-
-I think using `janitor` across this project will help with aligning column
-types and names.
-
-```{r}
-library(janitor)
-clean_names(openSRP) %>%
-  skimr::skim()
-```
-
-We also have a data dictionary available:
-
-```{r}
-drive_find(pattern = "openSRP_dictionary*") %>%
-  drive_download(path = here("data", "raw", "openSRP_dictionary.xlsx"), overwrite=TRUE) -> dat
-
-openSRP_dict <- read_excel(dat$local_path)
-
-head(openSRP_dict)
-```
-
-#### Column by Column
-
-Let's investigate all of the columns in the dataset.
-
-
-
-Let's start with addressing column types:
-
-```{r}
-openSRP_ <- clean_names(openSRP)
-```
-
-```{r}
-numerics <- c("", "")
-factors <- c("")
-strings <- c("")
-```
 
 ```{r development-inflate, eval=FALSE}
 # Run but keep eval=FALSE to avoid infinite loop

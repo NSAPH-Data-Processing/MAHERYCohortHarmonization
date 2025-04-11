@@ -12,7 +12,7 @@ tar_option_set(
   packages = c(
     # Packages that your targets need for their tasks.
     "tibble", "googledrive", "purrr", "dplyr", "lubridate",
-    "tidyr",
+    "tidyr", "here", "readxl", "readr",
     "MAHERYCohortHarmonization"   # This pipeline
   )    
   # format = "qs", # Optionally set the default storage format. qs is fast.
@@ -120,6 +120,43 @@ list(
         stop("🚨 Google Drive files have changed since the freeze date. Halting pipeline to prevent overwrite.")
       }
       TRUE  # Return TRUE if safe
+    }
+  ),
+
+  # now we can download the raw files
+  tar_target(
+    name = raw_files,
+    command = {
+      auth_status <- authenticate_google_drive()
+      data_files %>%
+        mutate(output_path = map(regex, download_to_local, download_dir = here("data", "raw"))) %>%
+        unnest(output_path)
+    }
+  ),
+
+  # each file
+  tar_target(
+    name = opensrp,
+    command = {
+      read_excel(raw_files$output_path[1])
+    }
+  ),
+  tar_target(
+    name = opensrp_dict,
+    command = {
+      read_excel(raw_files$output_path[2])
+    }
+  ),
+  tar_target(
+    name = dharma2019,
+    command = {
+      read_csv(raw_files$output_path[3])
+    }
+  ),
+  tar_target(
+    name = dharma2020,
+    command = {
+      read_excel(raw_files$output_path[4])
     }
   )
 )
