@@ -26,20 +26,39 @@ Let's start with some simple EDA.
 
 ```{r development-preprocess_2018}
 # Prepare the code of your function here
-
+library(here)
 library(dplyr)
 library(stringr)
+library(janitor)
+library(targets)
+library(skimr)
 library(googledrive)
+
 if(!authenticate_google_drive()) {
   stop("Google drive not authenticated!")
 }
-
-input_files <- mahery_input_files()
-
-
 ```
 
+```{r development-fetch_data}
+tar_load(opensrp)
+tar_load(opensrp_dict)
+```
 
+The first thing to do is to run the column names through `clean_names`:
+
+```{r}
+opensrp_ <- clean_names(opensrp)
+```
+
+Now, we go through each column and check the types and summary of the data:
+
+```{r}
+summary(opensrp_)
+```
+
+```{r}
+skim(opensrp_)
+```
 
 ```{r function-preprocess_2018}
 #' preprocess_2018 Title
