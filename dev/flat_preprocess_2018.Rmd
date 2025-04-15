@@ -20,6 +20,11 @@ In this notebook, we're exploring and preprocessing the 2018 data from OpenSRP.
 The function will ultimately preprocess the data so that it can be harmonized
 effectively with the other datasets.
 
+What is OpenSRP?
+
+What is OpenSRP? It appears OpenSRP should cover year 2018. What is it and what does it survey?
+> Open SRP is a software to collect data. We collaborated with an Indonesian-based researchin 2018 that managed and stored our data. Their website does not exist anymore. That is the first platform we used for the ongoing health surveillance surveys. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet.
+
 ## EDA
 
 Let's start with some simple EDA.
@@ -59,6 +64,16 @@ summary(opensrp_)
 ```{r}
 skim(opensrp_)
 ```
+
+What is user ID?
+
+```{r}
+opensrp_ %>%
+  pull(user_id) %>%
+  unique() %>% length()
+```
+
+We can leave this as a factor since it defines
 
 ```{r function-preprocess_2018}
 #' preprocess_2018 Title

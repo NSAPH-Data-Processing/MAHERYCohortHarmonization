@@ -141,13 +141,20 @@ list(
   tar_target(
     name = opensrp,
     command = {
-      read_excel(raw_files$output_path[1])
+
+      sheet_names <- excel_sheets(raw_files$output_path[1])
+      map(set_names(sheet_names), function(x) {
+        read_excel(raw_files$output_path[1], sheet = x)
+        })
     }
   ),
   tar_target(
     name = opensrp_dict,
     command = {
-      read_excel(raw_files$output_path[2])
+      sheet_names <- excel_sheets(raw_files$output_path[2])
+      map(set_names(sheet_names), function(x) {
+        read_excel(raw_files$output_path[2], sheet = x)
+        })
     }
   ),
   tar_target(
@@ -159,7 +166,11 @@ list(
   tar_target(
     name = dharma2020,
     command = {
-      read_excel(raw_files$output_path[4])
-    }
+      sheet_names <- excel_sheets(raw_files$output_path[4])
+      map(set_names(sheet_names), function(x) {
+        read_excel(raw_files$output_path[4], sheet = x)
+        })
+    },
+    error = "trim" # This is a workaround for the fact that the file is too large to read in one go; we'll remedy this in future
   )
 )
