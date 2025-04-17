@@ -25,10 +25,6 @@ What is OpenSRP?
 What is OpenSRP? It appears OpenSRP should cover year 2018. What is it and what does it survey?
 > Open SRP is a software to collect data. We collaborated with an Indonesian-based researchin 2018 that managed and stored our data. Their website does not exist anymore. That is the first platform we used for the ongoing health surveillance surveys. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet.
 
-## EDA
-
-Let's start with some simple EDA.
-
 ```{r development-preprocess_2018}
 # Prepare the code of your function here
 library(here)
@@ -37,6 +33,8 @@ library(stringr)
 library(janitor)
 library(targets)
 library(skimr)
+library(forcats)
+library(lubridate)
 library(googledrive)
 
 if(!authenticate_google_drive()) {
@@ -44,36 +42,372 @@ if(!authenticate_google_drive()) {
 }
 ```
 
+Load the targets data:
+
 ```{r development-fetch_data}
 tar_load(opensrp)
 tar_load(opensrp_dict)
 ```
 
-The first thing to do is to run the column names through `clean_names`:
+The OpenSRP file has a number of sheets:
 
 ```{r}
-opensrp_ <- clean_names(opensrp)
+names(opensrp)
 ```
 
-Now, we go through each column and check the types and summary of the data:
+Importantly, there are a few "hierarchical levels" of data catalogued here.
+
+Level 0: Household enrollment
+Level 1: Individuals in household
+Level 2: Antropometric data (every 3 months), dietary intake data collected from head of household (every 4 months), followup data
+
+Although, for clarity, this should be named the opposite...?
+
+Ultimately, a good idea might be to have it such that the most granular
+level is an individual, the next level up is their household. But we can solve for that later.
+
+## Open Census
+
+We're told that the Open census sheet is the baseline. This should be
+the most granular level of individual data.
 
 ```{r}
-summary(opensrp_)
+open_census <- opensrp$`Open census`
 ```
 
 ```{r}
-skim(opensrp_)
+summary(open_census)
+```
+
+```{r}
+skim(open_census)
+```
+
+Supposedly, there are 5050
+
+We'll start by using janitor to clean the column names.
+```{r}
+open_census_ <- janitor::clean_names(open_census)
 ```
 
 What is user ID?
 
 ```{r}
-opensrp_ %>%
+open_census_ %>%
   pull(user_id) %>%
   unique() %>% length()
 ```
 
-We can leave this as a factor since it defines
+We only have two unique values for this. The values themselves are just a region
+in Madagascar. So we can leave this column as a factor.
+
+```{r}
+open_census_ %>%
+  mutate(user_id = as_factor(user_id)) -> open_census_
+```
+
+Next, `hh_head_name`. This is supposedly the name of the head of household.
+
+```{r}
+open_census_ %>%
+  pull(hh_head_name) %>%
+  unique() %>% length()
+```
+
+We have 134 unique HHs. But, we can see that there are some
+weird anomalies here. For example, some entries have commas and
+extra spaces. We can clean this up with `str_squish` and `str_remove_all`.
+```{r}
+open_census_ %>%
+  mutate(hh_head_name = hh_head_name %>%
+    str_to_lower() %>%
+    str_squish() %>%
+    str_remove_all(",")
+  ) -> open_census_
+```
+
+```{r}
+open_census_ %>%
+  pull(hh_head_name) %>%
+  unique() %>% length()
+```
+
+The number of unique entries stays the same, so this is encouraging.
+
+Next, we look at the `name_family_member` column. This is the name of the household member, ideally the most granular observation in the dataset.
+
+```{r}
+open_census_ %>%
+  pull(name_family_member) %>%
+  unique() %>% length()
+```
+
+Some must be duplicated, so let's find those:
+
+```{r}
+open_census_ %>%
+  group_by(name_family_member, hh_head_name) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) %>%
+  arrange(desc(n)) -> dups
+
+open_census_ %>%
+  filter(name_family_member %in% dups$name_family_member) %>% arrange(name_family_member) -> multi_names
+```
+
+There are a number of people who are listed as the same name, but
+with different IDs or member codes. We'll have to keep an eye on these.
+What we can probably do is code all of the other columns and check for anomalies
+there.
+
+### DoB
+
+Next is date of birth. This is coded pretty weird, but we have
+a column called `dob_actual` which might tell us if it is a valid
+DoB row.
+
+We should check to make sure that everyone has at least one `yes` to this column:
+
+```{r}
+open_census_ %>%
+  filter(dob_actual == "Yes") %>%
+  pull(name_family_member) %>%
+  unique() %>% length()
+```
+
+So there are some people who do not have a DoB actual.
+Let's do our best to form DoBs from the columns anyway, and see
+how that goes. Importantly, there are cases where the
+month is coded as 'month idr'. Here's a chatgpt response to that:
+
+> This abbreviation may have been derived from “I don’t remember” in English, either directly or influenced by informal bilingual usage, especially in multilingual communities where French and some English are spoken.
+
+I think we can safely assume that this is the case, and
+as long as the year is valid, we can make an assumption and place
+their DoB as January 1st of that year (we'll flag these though as `dob_estimated`).
+
+Below is the function that makes our DoBs:
+  
+```{r function-clean_opencensus_dob}
+#' Clean OpenCensus SRP Date of Birth
+#' 
+#' This function cleans the date of birth (DoB) data from the Open Census SRP dataset.
+#' 
+#' @return tibble
+#' @importFrom lubridate dmy
+#' @importFrom dplyr mutate case_when
+#' @importFrom stringr str_to_lower str_replace_all
+#' @export
+clean_opencensus_dob <- function(open_census_){
+  
+  open_census_ %>%
+    # convert date to numeric and remove any invalid dates
+    mutate(dob_date = as.numeric(dob_date)) %>%
+
+    # record any time that the date is likely to be estimated
+    mutate(dob_estimated = case_when(
+      dob_actual == "No"        ~ TRUE, # if they dob actual is false
+      dob_month == "month idr"  ~ TRUE, # if they cannot remember the month
+      dob_date > 31             ~ TRUE, # or if the date is 999 (likely a placeholder for NA)
+      .default = FALSE
+    )) %>%
+
+    # if day is greater than 31, set it to 1 for the estimate
+    mutate(dob_date = ifelse(dob_date > 31, 1, dob_date)) %>%
+
+    # convert month from french to english for clarity
+    mutate(dob_month = dob_month %>%
+      str_to_lower() %>%
+      str_replace_all("janvier", "January") %>%
+      str_replace_all("février", "February") %>%
+      str_replace_all("fevrier", "February") %>%
+      str_replace_all("mars", "March") %>%
+      str_replace_all("avril", "April") %>%
+      str_replace_all("mai", "May") %>%
+      str_replace_all("juin", "June") %>%
+      str_replace_all("juillet", "July") %>%
+      str_replace_all("août", "August") %>%
+      str_replace_all("aout", "August") %>%
+      str_replace_all("septembre", "September") %>%
+      str_replace_all("octobre", "October") %>%
+      str_replace_all("novembre", "November") %>%
+      str_replace_all("décembre", "December") %>%
+      str_replace_all("decembre", "December") %>%
+      # if month is idr, set it to january 1st
+      str_replace_all("month idr", "January")
+    ) %>%
+
+    # convert month in english to numeric for lubridate
+    mutate(dob_month = dob_month %>%
+      str_to_lower() %>%
+      str_replace_all("january", "01") %>%
+      str_replace_all("february", "02") %>%
+      str_replace_all("march", "03") %>%
+      str_replace_all("april", "04") %>%
+      str_replace_all("may", "05") %>%
+      str_replace_all("june", "06") %>%
+      str_replace_all("july", "07") %>%
+      str_replace_all("august", "08") %>%
+      str_replace_all("september", "09") %>%
+      str_replace_all("october", "10") %>%
+      str_replace_all("november", "11") %>%
+      str_replace_all("december", "12")
+    ) %>%
+    # convert to date
+    mutate(dob = paste0(dob_date, "-", dob_month, "-", dob_year) %>%
+      dmy()
+    )
+}
+```
+  
+```{r tests-clean_opensrp_dob}
+test_that("clean_opensrp_dob works", {
+  expect_true(inherits(clean_opencensus_dob, "function")) 
+})
+```
+  
+Let's see the effect of this mutation:
+
+```{r}
+open_census_ %>%
+  clean_opencensus_dob() -> open_census_
+```
+
+We lose 7 rows in the process. 
+
+```{r}
+open_census_ %>%
+      filter(is.na(dob))
+```
+
+One of them is coded as a leap year in 1997 (impossible).
+What's interesting is that the `dob_actual` value is "Yes", so this is definitely strange.
+Four of them have 999 (NA) as their year, so we can't do anything about that.
+The remaining 2 have NA in the month, so we cannot use them.
+
+```{r}
+open_census_ %>%
+  select(dob_actual, dob_estimated) %>%
+  table()
+```
+
+Through this procedure, we have 54 cases where we estimated DoB, but the
+data says that the DoB is "actual". I am comfortable moving forward with this.
+
+What is the distribution of DoB?
+
+```{r}
+library(ggplot2)
+min_year <- min(open_census_$dob,na.rm = T) %>% year()
+max_year <- max(open_census_$dob,na.rm = T) %>% year()
+open_census_ %>%
+  ggplot(aes(x = dob)) +
+  geom_histogram(bins = length(min_year:max_year)) + # one bin per year
+  scale_x_date(date_labels = "%Y") +
+  ggtitle("Distribution of Date of Birth binned by Year")
+```
+
+We can move on with the other variables.
+
+## Open Census — Demographics Cont'd
+
+We can process ethnic group next:
+
+```{r}
+open_census_$ethnic_group %>% table()
+```
+
+```{r}
+open_census_$other_ethnic_group %>% table()
+```
+
+I think we can collapse these into a single column.
+```{r}
+open_census_ %>%
+  mutate(ethnicity =
+    case_when(
+      is.na(ethnic_group)     ~ other_ethnic_group,
+      ethnic_group == "Ethnic group other" ~ other_ethnic_group,
+      .default = ethnic_group
+    ) %>% str_to_lower() %>% as_factor()
+  ) -> open_census_
+```
+
+```{r}
+open_census_$ethnicity %>% table()
+```
+
+Sex is easy to recode:
+
+```{r}
+open_census_ %>%
+  mutate(sex = sex %>% str_to_lower() %>% as_factor()) -> open_census_
+```
+
+### Education & Profession
+
+The recoding of education is done like so:
+      
+```{r function-recode_opensrp_education}
+#' Recode OpenSRP Education Levels
+#' 
+#' Description
+#' 
+#' @return
+#' 
+#' @export
+recode_opensrp_education <- function(df){
+
+    # Define the label mapping
+    education_map <- c(
+      "Epp"   = "primary",
+      "Ceg"   = "lower_secondary",
+      "Lycee" = "upper_secondary",
+      "University"  = "higher_education",
+      "None"  = "no_formal_education"
+    )
+
+    education_levels <- c(
+      "no_formal_education",
+      "primary",
+      "lower_secondary",
+      "upper_secondary",
+      "higher_education"
+    )
+
+    # Recode and create an ordered factor
+    df <- df %>%
+      mutate(
+        education_level = recode(education, !!!education_map),
+        education_level = fct_relevel(education_level, !!!education_levels)
+      )
+
+    return(df)
+}
+```
+    
+```{r tests-recode_opensrp_education}
+test_that("recode_opensrp_education works", {
+  expect_true(inherits(recode_opensrp_education, "function")) 
+})
+```
+
+```{r}
+open_census_ %>%
+  recode_opensrp_education() -> open_census_
+```
+
+```{r}
+open_census_$education_level %>% table()
+```  
+
+I think we can comfortably collapse profession
+
+```{r}
+open_census_ %>% 
+  select(contains('profession')) %>%
+  table()
+```
 
 ```{r function-preprocess_2018}
 #' preprocess_2018 Title
@@ -97,84 +431,12 @@ test_that("preprocess_2018 works", {
 })
 ```
 
-### 2018
-
-To start, we read in the 2018 data:
-
-```{r}
-library(dplyr)
-```
-
-```{r}
-drive_find(pattern = "openSRP_data_2018*") %>%
-  select(-id)
-```
-
-Since it's an xlsx, we'll need to use the appropriate library:
-
-```{r}
-library(readxl)
-library(here)
-```
-
-```{r}
-drive_find(pattern = "openSRP_data_2018*") %>%
-  drive_download(path = here("data", "raw", "openSRP_data_2018.xlsx"), overwrite=TRUE) -> dat
-
-openSRP <- read_excel(dat$local_path)
-
-#skimr is a great way to look at the data without
-#having to print the whole thing and reveal PHI
-skimr::skim(openSRP)
-```
-
-There are loads of columns:
-
-```{r}
-names(openSRP)
-```
-
-I think using `janitor` across this project will help with aligning column
-types and names.
-
-```{r}
-library(janitor)
-clean_names(openSRP) %>%
-  skimr::skim()
-```
-
-We also have a data dictionary available:
-
-```{r}
-drive_find(pattern = "openSRP_dictionary*") %>%
-  drive_download(path = here("data", "raw", "openSRP_dictionary.xlsx"), overwrite=TRUE) -> dat
-
-openSRP_dict <- read_excel(dat$local_path)
-
-head(openSRP_dict)
-```
-
-#### Column by Column
-
-Let's investigate all of the columns in the dataset.
-
-
-
-Let's start with addressing column types:
-
-```{r}
-openSRP_ <- clean_names(openSRP)
-```
-
-```{r}
-numerics <- c("", "")
-factors <- c("")
-strings <- c("")
-```
-
 ```{r development-inflate, eval=FALSE}
 # Run but keep eval=FALSE to avoid infinite loop
 # Execute in the console directly
 fusen::inflate(flat_file = "dev/flat_preprocess_2018.Rmd", vignette_name = "Go further")
 ```
+
+
+
 
