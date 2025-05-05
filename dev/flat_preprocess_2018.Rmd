@@ -18,7 +18,8 @@ pkgload::load_all(export_all = FALSE)
 
 In this notebook, we're exploring and preprocessing the 2018 data from OpenSRP.
 The function will ultimately preprocess the data so that it can be harmonized
-effectively with the other datasets.
+effectively with the other datasets. Importantly, we use the column suffix `_clean`
+to denote that the column has been cleaned and is being kept for analysis.
 
 What is OpenSRP?
 
@@ -42,7 +43,7 @@ if(!authenticate_google_drive()) {
 }
 ```
 
-Load the targets data:
+Load the targets data for prototyping:
 
 ```{r development-fetch_data}
 tar_load(opensrp)
@@ -83,9 +84,8 @@ summary(open_census)
 skim(open_census)
 ```
 
-Supposedly, there are 5050
-
 We'll start by using janitor to clean the column names.
+
 ```{r}
 open_census_ <- janitor::clean_names(open_census)
 ```
@@ -103,7 +103,7 @@ in Madagascar. So we can leave this column as a factor.
 
 ```{r}
 open_census_ %>%
-  mutate(user_id = as_factor(user_id)) -> open_census_
+  mutate(user_id_clean = as_factor(user_id)) -> open_census_
 ```
 
 Next, `hh_head_name`. This is supposedly the name of the head of household.
@@ -117,9 +117,10 @@ open_census_ %>%
 We have 134 unique HHs. But, we can see that there are some
 weird anomalies here. For example, some entries have commas and
 extra spaces. We can clean this up with `str_squish` and `str_remove_all`.
+
 ```{r}
 open_census_ %>%
-  mutate(hh_head_name = hh_head_name %>%
+  mutate(hh_head_name_clean = hh_head_name %>%
     str_to_lower() %>%
     str_squish() %>%
     str_remove_all(",")
@@ -128,7 +129,7 @@ open_census_ %>%
 
 ```{r}
 open_census_ %>%
-  pull(hh_head_name) %>%
+  pull(hh_head_name_clean) %>%
   unique() %>% length()
 ```
 
@@ -159,6 +160,15 @@ There are a number of people who are listed as the same name, but
 with different IDs or member codes. We'll have to keep an eye on these.
 What we can probably do is code all of the other columns and check for anomalies
 there.
+
+```{r}
+open_census_ %>%
+  mutate(name_family_member_clean = name_family_member %>%
+    str_to_lower() %>%
+    str_squish() %>%
+    str_remove_all(",")
+  ) -> open_census_
+```
 
 ### DoB
 
@@ -202,21 +212,21 @@ clean_opencensus_dob <- function(open_census_){
   
   open_census_ %>%
     # convert date to numeric and remove any invalid dates
-    mutate(dob_date = as.numeric(dob_date)) %>%
+    mutate(dob_date_clean = as.numeric(dob_date)) %>%
 
     # record any time that the date is likely to be estimated
     mutate(dob_estimated = case_when(
-      dob_actual == "No"        ~ TRUE, # if they dob actual is false
+      dob_actual == "No"        ~ TRUE, # if the dob actual is false
       dob_month == "month idr"  ~ TRUE, # if they cannot remember the month
-      dob_date > 31             ~ TRUE, # or if the date is 999 (likely a placeholder for NA)
+      dob_date_clean > 31       ~ TRUE, # or if the date is 999 (likely a placeholder for NA)
       .default = FALSE
     )) %>%
 
     # if day is greater than 31, set it to 1 for the estimate
-    mutate(dob_date = ifelse(dob_date > 31, 1, dob_date)) %>%
+    mutate(dob_date_clean = ifelse(dob_date_clean > 31, 1, dob_date_clean)) %>%
 
     # convert month from french to english for clarity
-    mutate(dob_month = dob_month %>%
+    mutate(dob_month_clean = dob_month %>%
       str_to_lower() %>%
       str_replace_all("janvier", "January") %>%
       str_replace_all("février", "February") %>%
@@ -238,7 +248,7 @@ clean_opencensus_dob <- function(open_census_){
     ) %>%
 
     # convert month in english to numeric for lubridate
-    mutate(dob_month = dob_month %>%
+    mutate(dob_month_clean = dob_month_clean %>%
       str_to_lower() %>%
       str_replace_all("january", "01") %>%
       str_replace_all("february", "02") %>%
@@ -254,7 +264,7 @@ clean_opencensus_dob <- function(open_census_){
       str_replace_all("december", "12")
     ) %>%
     # convert to date
-    mutate(dob = paste0(dob_date, "-", dob_month, "-", dob_year) %>%
+    mutate(dob_clean = paste0(dob_date_clean, "-", dob_month_clean, "-", dob_year) %>%
       dmy()
     )
 }
@@ -277,11 +287,10 @@ We lose 7 rows in the process.
 
 ```{r}
 open_census_ %>%
-      filter(is.na(dob))
+      filter(is.na(dob_clean))
 ```
 
-One of them is coded as a leap year in 1997 (impossible).
-What's interesting is that the `dob_actual` value is "Yes", so this is definitely strange.
+One of them is coded as a leap year in 1997 (impossible). What's interesting is that the `dob_actual` value is "Yes", so this is definitely strange.
 Four of them have 999 (NA) as their year, so we can't do anything about that.
 The remaining 2 have NA in the month, so we cannot use them.
 
@@ -291,17 +300,22 @@ open_census_ %>%
   table()
 ```
 
-Through this procedure, we have 54 cases where we estimated DoB, but the
-data says that the DoB is "actual". I am comfortable moving forward with this.
+There were 54 cases where DoB was estimated but the original column
+said that it was actual. I wonder how these got encoded that way then?
+
+```{r}
+open_census_ %>%
+  filter(dob_actual == "Yes" & dob_estimated == TRUE)
+```
 
 What is the distribution of DoB?
 
 ```{r}
 library(ggplot2)
-min_year <- min(open_census_$dob,na.rm = T) %>% year()
-max_year <- max(open_census_$dob,na.rm = T) %>% year()
+min_year <- min(open_census_$dob_clean,na.rm = T) %>% year()
+max_year <- max(open_census_$dob_clean,na.rm = T) %>% year()
 open_census_ %>%
-  ggplot(aes(x = dob)) +
+  ggplot(aes(x = dob_clean)) +
   geom_histogram(bins = length(min_year:max_year)) + # one bin per year
   scale_x_date(date_labels = "%Y") +
   ggtitle("Distribution of Date of Birth binned by Year")
@@ -324,7 +338,7 @@ open_census_$other_ethnic_group %>% table()
 I think we can collapse these into a single column.
 ```{r}
 open_census_ %>%
-  mutate(ethnicity =
+  mutate(ethnicity_clean =
     case_when(
       is.na(ethnic_group)     ~ other_ethnic_group,
       ethnic_group == "Ethnic group other" ~ other_ethnic_group,
@@ -341,7 +355,7 @@ Sex is easy to recode:
 
 ```{r}
 open_census_ %>%
-  mutate(sex = sex %>% str_to_lower() %>% as_factor()) -> open_census_
+  mutate(sex_clean = sex %>% str_to_lower() %>% as_factor()) -> open_census_
 ```
 
 ### Education & Profession
@@ -379,7 +393,7 @@ recode_opensrp_education <- function(df){
     df <- df %>%
       mutate(
         education_level = recode(education, !!!education_map),
-        education_level = fct_relevel(education_level, !!!education_levels)
+        education_level_clean = fct_relevel(education_level, !!!education_levels)
       )
 
     return(df)
@@ -398,15 +412,85 @@ open_census_ %>%
 ```
 
 ```{r}
-open_census_$education_level %>% table()
+open_census_$education_level_clean %>% table()
 ```  
 
 I think we can comfortably collapse profession
 
 ```{r}
 open_census_ %>% 
-  select(contains('profession')) %>%
+  select(matches('^profession*')) %>%
   table()
+```
+
+We can classify employment with the following:
+
+> “Employment status is classified following ILO and DHIS2 recommendations: distinguishing Employed, Unemployed, Inactive (students, homemakers, retirees, disabled), Not applicable (persons below minimum working age), and Unknown.”
+
+We have a column `other_profession` which currently only only has two
+outstanding entries: `commitionaire` and `Zaza loatra tsy miasa`. The latter
+means "too young," and the former likely means "Small vendor / commission agent".
+Hence, we can remove the latter and assign the former to `vendor`. I believe
+we can combine that with the option `Farmer shop owner` in the other column too.
+
+First, we classify employment, and then formalize the profession choices.
+
+```{r}
+open_census_ %>%
+  mutate(employment_status_clean = 
+    case_when(
+      str_to_lower(profession) == "not working" ~ "inactive",
+      str_to_lower(profession) == "occupation"  ~ "employed",
+      str_to_lower(profession) == "too young"   ~ "not applicable",
+      TRUE ~ NA_character_
+
+    )
+  ) %>%
+  mutate(
+    profession_clean = case_when(
+      str_detect(str_to_lower(profession_choices), "farmer") ~ "farmer",
+      str_detect(str_to_lower(profession_choices), "shop owner") ~ "shop owner",
+      str_detect(str_to_lower(profession_choices), "teacher") ~ "teacher",
+      str_detect(str_to_lower(profession_choices), "student") ~ "student",
+      TRUE ~ NA_character_
+    )
+  ) -> open_census_
+```
+
+
+```{r}
+open_census_ %>%
+  select(employment_status_clean, profession_clean) %>%
+  table()
+```
+
+### Marital Status
+
+This should be a fairly simple one:
+
+```{r}
+open_census_ %>%
+  select(marital_status) %>%
+  table()
+```
+
+We can leave it as is.
+
+```{r}
+open_census_ %>%
+  mutate(marital_status_clean = marital_status %>% str_to_lower() %>% as_factor()) -> open_census_
+```
+
+### Healthcare Info
+
+This one is a bit more complicated. We have a number of columns for
+healthcare.
+
+```{r}
+open_census_ %>%
+  select(prior_health_care:deathyear) %>%
+  mutate(across(everything(), ~ as.factor(.))) %>%
+  summary()
 ```
 
 ```{r function-preprocess_2018}
@@ -436,6 +520,7 @@ test_that("preprocess_2018 works", {
 # Execute in the console directly
 fusen::inflate(flat_file = "dev/flat_preprocess_2018.Rmd", vignette_name = "Go further")
 ```
+
 
 
 
