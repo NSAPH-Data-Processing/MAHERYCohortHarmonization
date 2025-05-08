@@ -12,7 +12,8 @@ tar_option_set(
   packages = c(
     # Packages that your targets need for their tasks.
     "tibble", "googledrive", "purrr", "dplyr", "lubridate",
-    "tidyr", "here", "readxl", "readr",
+    "tidyr", "here", "readxl", "readr", "janitor", "stringr",
+    "forcats",
     "MAHERYCohortHarmonization"   # This pipeline
   )    
   # format = "qs", # Optionally set the default storage format. qs is fast.
@@ -172,5 +173,12 @@ list(
         })
     },
     error = "trim" # This is a workaround for the fact that the file is too large to read in one go; we'll remedy this in future
+  ),
+  tar_target(
+    name = cohort_2018,
+    command = {
+      open_census <- opensrp$`Open census`
+      preprocess_2018(open_census)
+    }
   )
 )

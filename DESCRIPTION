@@ -16,10 +16,14 @@ Imports:
     lubridate,
     magrittr,
     stats,
+    stringr,
     tibble
 Suggests: 
+    ggplot2,
+    janitor,
     knitr,
     rmarkdown,
+    targets,
     testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr

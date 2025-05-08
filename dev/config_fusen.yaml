@@ -17,6 +17,29 @@ flat_full.Rmd:
     overwrite: ask
     clean: ask
     codecov: false
+flat_preprocess_2018.Rmd:
+  path: dev/flat_preprocess_2018.Rmd
+  state: active
+  R:
+  - R/audit_categorical_cleaning.R
+  - R/clean_opencensus_dob.R
+  - R/recode_opensrp_education.R
+  - R/preprocess_2018.R
+  tests:
+  - tests/testthat/test-audit_categorical_cleaning.R
+  - tests/testthat/test-clean_opencensus_dob.R
+  - tests/testthat/test-recode_opensrp_education.R
+  - tests/testthat/test-preprocess_2018.R
+  vignettes: vignettes/cohort-2018-preprocessing.Rmd
+  inflate:
+    flat_file: dev/flat_preprocess_2018.Rmd
+    vignette_name: Cohort 2018 Preprocessing
+    open_vignette: true
+    check: false
+    document: true
+    overwrite: ask
+    clean: ask
+    codecov: false
 flat_tracking_inputs.Rmd:
   path: dev/flat_tracking_inputs.Rmd
   state: active
