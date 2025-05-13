@@ -169,13 +169,13 @@ library(lubridate)
 #' @export
 #' @importFrom googledrive drive_get as_id
 #' @importFrom lubridate ymd_hms
-has_drive_file_changed <- function(file_id, last_known_run_time=ymd_hms("2025-04-01 00:00:00", tz = "UTC")) {
+has_drive_file_changed <- function(drive_resource, last_known_run_time=ymd_hms("2025-04-01 00:00:00", tz = "UTC")) {
   
   if(!authenticate_google_drive()){
     stop("Authentication failed. Please check the path to the authentication file.")
   }
-  file <- drive_get(as_id(file_id))
-  current_time <- ymd_hms(file$drive_resource[[1]]$modifiedTime, tz = "UTC")
+  
+  current_time <- ymd_hms(drive_resource$modifiedTime, tz = "UTC")
   return(current_time > last_known_run_time)
 }
 ```
@@ -346,8 +346,8 @@ mahery_input_files <- function(freeze_date = mdy("01-04-2025")){
       ~fname,               ~regex,                 ~freeze_date,
       "2018_data",          "openSRP_data_2018*",   freeze_date,
       "2018_dictionary",    "openSRP_dictionary*",  freeze_date,
-      "2019_data",          "Dharma_2019*",         freeze_date,
-      "2020_data_onwards",  "Dharma_followup*",     freeze_date
+      "2019_beyond",        "Dharma_2019*",         freeze_date,
+      "2019_data",          "Dharma_followup*",     freeze_date
   )
 }
 ```
@@ -423,6 +423,6 @@ using a function to track each one.
 ```{r development-inflate, eval=FALSE}
 # Run but keep eval=FALSE to avoid infinite loop
 # Execute in the console directly
-fusen::inflate(flat_file = "dev/flat_tracking_inputs.Rmd", vignette_name = "Tracking Input Data")
+fusen::inflate(flat_file = "dev/flat_tracking_inputs.Rmd", vignette_name = "Tracking Input Data", check=FALSE)
 ```
 

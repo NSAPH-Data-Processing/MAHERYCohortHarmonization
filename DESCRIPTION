@@ -9,6 +9,7 @@ Description: This package establishes a pipeline that harmonizes the
     that defines the MAHERY Cohort for future studies.
 License: MIT + file LICENSE
 Imports: 
+    digest,
     dplyr,
     fs,
     googledrive,
@@ -19,10 +20,13 @@ Imports:
     stringr,
     tibble
 Suggests: 
+    forcats,
+    ggalluvial,
     ggplot2,
     janitor,
     knitr,
     rmarkdown,
+    skimr,
     targets,
     testthat (>= 3.0.0)
 VignetteBuilder: 

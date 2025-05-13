@@ -42,7 +42,18 @@ The OpenSRP file has a number of sheets:
 library(targets)
 tar_load(opensrp)
 tar_load(opensrp_dict)
-names(opensrp)
+
+library(here)
+library(dplyr)
+library(stringr)
+library(janitor)
+library(targets)
+library(skimr)
+library(forcats)
+library(lubridate)
+library(googledrive)
+library(ggplot2)
+library(ggalluvial)
 ```
 
 
@@ -80,7 +91,7 @@ summary(open_census)
 
 
 ```{r}
-skim(open_census)
+skimr::skim(open_census)
 ```
 
 
@@ -439,13 +450,35 @@ open_census_ %>%
 ```
 
 
-We can wrap that up in the preprocess function:
+We can wrap that up in the `preprocess_opensrp2018()` function.
 
-```{r}
-preprocess_2018(open_census) %>% summary()
+### Generating Unique IDs
+
+As a final step, we're also going to generate the UUID for each
+individual. This is important for the final output, as we will
+be using this to merge with the other datasets. The previous method
+of creating a UUID was to paste a few variables, but this is
+not ideal as it can lead to duplicates as well as security issues.
+To ensure security, we'll use the `digest` package and a secure [salt](https://en.wikipedia.org/wiki/Salt_(cryptography)).
+The salt will be stored in the R environment as a secret variable.
+  
+  
+
+```{r example-generate_uid}
+generate_uid(salt = "cohort_secret", "John", "Doe", "1990-01-01")
 ```
 
 
+### Pipeline Step Excution: preprocess_opensrp_2018
+
+The final function will take the Open Census data and run it through
+the pipeline we have created.
+  
+```{r example-preprocess_opensrp2018}
+preprocess_opensrp2018(open_census) %>% summary()
+```
+
+  
 
 
 

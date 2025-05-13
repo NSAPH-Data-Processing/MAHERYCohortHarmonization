@@ -13,7 +13,7 @@ tar_option_set(
     # Packages that your targets need for their tasks.
     "tibble", "googledrive", "purrr", "dplyr", "lubridate",
     "tidyr", "here", "readxl", "readr", "janitor", "stringr",
-    "forcats",
+    "forcats", "digest",
     "MAHERYCohortHarmonization"   # This pipeline
   )    
   # format = "qs", # Optionally set the default storage format. qs is fast.
@@ -77,7 +77,7 @@ list(
   tar_target(
     name = freeze_date,
     command = {
-      lubridate::mdy("01-04-2025")
+      lubridate::mdy("05-13-2025")
     }
   ),
   
@@ -93,7 +93,7 @@ list(
   tar_target(
     name = gdrive_files_have_NOT_changed,
     command = {
-      authenticate_google_drive()
+      invisible(authenticate_google_drive())
       any_changed <- data_files %>%
         mutate(
 
@@ -103,7 +103,9 @@ list(
         unnest(cols=c(search_results)) %>%
 
         # use the ID to check if it has changed
-        mutate(has_changed = has_drive_file_changed(id, freeze_date)) %>%
+        rowwise() %>%
+        mutate(has_changed = has_drive_file_changed(drive_resource, freeze_date)) %>%
+        ungroup() %>%
 
         # evaluate all() of the has_changed column
         summarise(any_changed = any(has_changed == TRUE)) %>%
@@ -178,7 +180,7 @@ list(
     name = cohort_2018,
     command = {
       open_census <- opensrp$`Open census`
-      preprocess_2018(open_census)
+      preprocess_opensrp2018(open_census)
     }
   )
 )

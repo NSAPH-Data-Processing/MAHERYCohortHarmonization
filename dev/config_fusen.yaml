@@ -1,6 +1,6 @@
 flat_full.Rmd:
   path: dev/flat_full.Rmd
-  state: active
+  state: false
   R:
   - R/my_median.R
   - R/my_other_median.R
@@ -23,13 +23,15 @@ flat_preprocess_2018.Rmd:
   R:
   - R/audit_categorical_cleaning.R
   - R/clean_opencensus_dob.R
+  - R/generate_uid.R
+  - R/preprocess_opensrp2018.R
   - R/recode_opensrp_education.R
-  - R/preprocess_2018.R
   tests:
   - tests/testthat/test-audit_categorical_cleaning.R
   - tests/testthat/test-clean_opencensus_dob.R
   - tests/testthat/test-recode_opensrp_education.R
-  - tests/testthat/test-preprocess_2018.R
+  - tests/testthat/test-generate_uid.R
+  - tests/testthat/test-preprocess_opensrp2018.R
   vignettes: vignettes/cohort-2018-preprocessing.Rmd
   inflate:
     flat_file: dev/flat_preprocess_2018.Rmd
@@ -59,7 +61,7 @@ flat_tracking_inputs.Rmd:
     flat_file: dev/flat_tracking_inputs.Rmd
     vignette_name: Tracking Input Data
     open_vignette: true
-    check: true
+    check: false
     document: true
     overwrite: ask
     clean: ask

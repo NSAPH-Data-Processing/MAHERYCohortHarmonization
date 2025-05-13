@@ -14,7 +14,7 @@ library(testthat)
 pkgload::load_all(export_all = FALSE)
 ```
 
-# preprocess_2018
+# preprocess_srp2018
 
 In this notebook, we're exploring and preprocessing the 2018 data from OpenSRP.
 The function will ultimately preprocess the data so that it can be harmonized
@@ -58,7 +58,18 @@ The OpenSRP file has a number of sheets:
 library(targets)
 tar_load(opensrp)
 tar_load(opensrp_dict)
-names(opensrp)
+
+library(here)
+library(dplyr)
+library(stringr)
+library(janitor)
+library(targets)
+library(skimr)
+library(forcats)
+library(lubridate)
+library(googledrive)
+library(ggplot2)
+library(ggalluvial)
 ```
 
 Importantly, there are a few "hierarchical levels" of data catalogued here.
@@ -141,7 +152,7 @@ summary(open_census)
 ```
 
 ```{r}
-skim(open_census)
+skimr::skim(open_census)
 ```
 
 We'll start by using janitor to clean the column names.
@@ -608,17 +619,60 @@ open_census_ %>%
     )
 ```
 
-We can wrap that up in the preprocess function:
+We can wrap that up in the `preprocess_opensrp2018()` function.
 
-```{r function-preprocess_2018}
-#' preprocess_2018 Title
-#'
-#' @return 1
-#' @export
-#'
-#' @examples
-preprocess_2018 <- function(open_census) {
+### Generating Unique IDs
+
+As a final step, we're also going to generate the UUID for each
+individual. This is important for the final output, as we will
+be using this to merge with the other datasets. The previous method
+of creating a UUID was to paste a few variables, but this is
+not ideal as it can lead to duplicates as well as security issues.
+To ensure security, we'll use the `digest` package and a secure [salt](https://en.wikipedia.org/wiki/Salt_(cryptography)).
+The salt will be stored in the R environment as a secret variable.
   
+```{r function-generate_uid}
+#' Title
+#' 
+#' Description
+#' 
+#' @importFrom digest digest
+#' 
+#' @return
+#' 
+#' @export
+generate_uid <- function(salt = "cohort_secret", ..., nchar=6) {
+  input <- paste(salt, ..., sep = "_")
+  uid <- substr(digest(input, algo = "sha256"), 1, nchar)  # 12-char unique ID
+  return(uid)
+}
+```
+  
+```{r tests-generate_uid}
+test_that("generate_uid works", {
+  expect_true(inherits(generate_uid, "function")) 
+})
+```
+
+```{r example-generate_uid}
+generate_uid(salt = "cohort_secret", "John", "Doe", "1990-01-01")
+```
+
+### Pipeline Step Excution: preprocess_opensrp_2018
+
+The final function will take the Open Census data and run it through
+the pipeline we have created.
+
+```{r function-preprocess_opensrp2018}
+#' Title
+#' 
+#' Description
+#' 
+#' @return
+#' 
+#' @export
+preprocess_opensrp2018 <- function(open_census){
+    
   open_census %>%
     clean_names() %>%
     mutate(village_clean = user_id %>% str_to_lower()) %>%
@@ -663,17 +717,21 @@ preprocess_2018 <- function(open_census) {
     mutate(sex_clean =  sex %>% str_to_lower() %>% as_factor()) %>%
     select(contains("clean")) %>%
     select(-dob_date_clean, -dob_month_clean) %>%
-    rename_all(~ str_replace(., "_clean", ""))
+    rename_all(~ str_replace(., "_clean", "")) %>%
+    rowwise() %>%
+    mutate(uuid = generate_uid(salt=Sys.getenv("UUID_SALT"), name, hh_head_name, as.character(dob))) %>%
+    ungroup() %>%
+    select(uuid, everything())
 }
 ```
-
-```{r}
-preprocess_2018(open_census) %>% summary()
+  
+```{r example-preprocess_opensrp2018}
+preprocess_opensrp2018(open_census) %>% summary()
 ```
-
-```{r tests-preprocess_2018}
-test_that("preprocess_2018 works", {
-  expect_true(inherits(preprocess_2018, "function"))
+  
+```{r tests-preprocess_opensrp2018}
+test_that("preprocess_opensrp2018 works", {
+  expect_true(inherits(preprocess_opensrp2018, "function")) 
 })
 ```
 
