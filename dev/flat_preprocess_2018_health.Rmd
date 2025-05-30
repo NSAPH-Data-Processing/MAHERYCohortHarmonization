@@ -1,0 +1,205 @@
+---
+title: "flat_preprocess_2018_health.Rmd empty"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+```{r setup}  
+library(here)
+library(targets)
+tar_load(opensrp, store = here::here("_targets"))
+tar_load(opensrp_dict, store = here::here("_targets"))
+tar_load(cohort_2018_deid, store = here::here("_targets"))
+
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+
+library(janitor)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(skimr)
+library(forcats)
+library(stringr)
+```
+
+In this notebook we're tackling the health data from the cohort 2018 opensrp file. We decided to
+leave this to a separate processing step because the health data is a bit more complex than the household registration and demographic data.
+
+Let's begin:
+
+## Reading in the data
+
+The data is read in from the targets pipeline, and is contained in the `opensrp` object.
+
+```{r}
+open_census <- opensrp$`Open census`
+
+head(open_census)
+```
+
+In this _specific case_, the raw data in the open census file is the same number of rows as the
+processed targets output, so I'm going to join the raw data to the health columns.
+
+```{r}
+open_census %>%
+  clean_names() %>%
+  # remove this individual as they are specifically excluded from the cohort as a duplicate
+  filter(!str_detect(member, "36841201")) %>%
+  select(prior_health_care:deathyear) %>%
+  bind_cols(select(cohort_2018_deid, uuid, sex), .) -> health_data
+```
+
+Now let's take a look at the data:
+```{r}
+skimr::skim(health_data)
+```
+
+The first thing to determine is whether `prior_health_care` refers to,
+"does this person have a history of a health care condition," or something else.
+
+```{r}
+health_data %>%
+  select(prior_health_care, prior_diagnosis) %>%
+  table()
+```
+
+From this it would appear that prior healthcare is a yes/no question
+that tells us if they have any history of health care conditions.
+
+```{r}
+health_data %>%
+  mutate(prior_health_condition_clean = case_when(
+    prior_health_care == "Yes" ~ "Yes", 
+    !is.na(prior_diagnosis) ~ "Yes",
+    TRUE ~ "No")
+    ) -> health_data_
+```
+
+Now let's look at the `prior_diagnosis` column:
+
+```{r}
+health_data_ %>%
+  select(prior_diagnosis) %>%
+  table()
+```
+
+```{r}
+health_data_ %>%
+  select(other_prior_diagnosis) %>%
+  table()
+```
+
+In the secondary column, we see many values that are translated. We'll translate
+these manually and then cast them width wise to create a wide format table.
+
+These values can then be categorised into DHIS2 categories, which we can then use to
+create a more useful health status table.
+    
+```{r development-create_health_diagnoses}
+# You can prepare the code of the create_health_diagnoses() function here
+```
+  
+```{r function-create_health_diagnoses}
+#' Title
+#' 
+#' Description
+#' 
+#' @return
+#' 
+#' @export
+create_health_diagnoses <- function(df){
+
+  df %>%
+    mutate(
+      diagnosis_english = case_when(
+        prior_diagnosis %in% c("Adetin kibo", "Aretim bavony") ~ "Gastrointestinal",
+        prior_diagnosis %in% c("Farasisa", "Hernie", "Voatombo komby", "Zonisy, farasisa") ~ "Hernia or Prolapse",
+        prior_diagnosis == "Aretintsofina" ~ "ENT (Ear/Nose/Throat)",
+        prior_diagnosis == "Hoditra fotsy" ~ "Genetic / Albinism",
+        prior_diagnosis == "Bongabe" ~ "Swelling / Mass",
+        prior_diagnosis %in% c("Mangoraka, tadigny", "Tadigny") ~ "Dermatologic",
+        prior_diagnosis == "Solopiso" ~ "Neurological (Epilepsy)",
+        prior_diagnosis %in% c("Matetika tontona", "Tontona") ~ "Dizziness / Syncope",
+        prior_diagnosis %in% c("Sohiky", "Soiky") ~ "Musculoskeletal Deformity",
+        prior_diagnosis == "Torantorana" ~ "Motor Disability",
+        prior_diagnosis == "Mentally handicapped" ~ "Developmental / Cognitive",
+        TRUE ~ "Other / Unknown"
+      )
+    ) %>%
+    mutate(
+      diagnosis_icd10_category = case_when(
+        diagnosis_english == "Gastrointestinal" ~ "Diseases of the digestive system (K00–K95)",
+        diagnosis_english == "Hernia or Prolapse" ~ "Diseases of the digestive system (K40–K46)",
+        diagnosis_english == "ENT (Ear/Nose/Throat)" ~ "Diseases of the ear and mastoid process (H60–H95)",
+        diagnosis_english == "Genetic / Albinism" ~ "Endocrine, nutritional and metabolic diseases (E70–E90)",
+        diagnosis_english == "Dermatologic" ~ "Diseases of the skin and subcutaneous tissue (L00–L99)",
+        diagnosis_english == "Swelling / Mass" ~ "Symptoms, signs and abnormal clinical findings (R22)",
+        diagnosis_english == "Neurological (Epilepsy)" ~ "Diseases of the nervous system (G40)",
+        diagnosis_english == "Dizziness / Syncope" ~ "Symptoms, signs and abnormal clinical findings (R42)",
+        diagnosis_english == "Musculoskeletal Deformity" ~ "Diseases of the musculoskeletal system (M40–M54)",
+        diagnosis_english == "Motor Disability" ~ "Diseases of the musculoskeletal system (M62)",
+        diagnosis_english == "Developmental / Cognitive" ~ "Mental and behavioural disorders (F70–F79)",
+        TRUE ~ "Other / Unknown"
+      )
+    ) %>%
+    mutate(
+      diagnosis_icd10_code = str_extract(diagnosis_icd10_category, "\\(([^)]+)\\)") %>%
+        str_remove_all("\\s") # Remove spaces from the ICD-10 code
+    )
+}
+```
+  
+```{r example-create_health_diagnoses, eval=FALSE}
+health_data_ %>% 
+  create_health_diagnoses() %>%
+  summary()
+```
+  
+```{r tests-create_health_diagnoses}
+test_that("create_health_diagnoses works", {
+  expect_true(inherits(create_health_diagnoses, "function")) 
+})
+```
+
+
+# preprocess_2018_health
+
+```{r development-preprocess_2018_health}
+# Prepare the code of your function here
+```
+
+```{r function-preprocess_2018_health}
+#' preprocess_2018_health Title
+#'
+#' @return 1
+#' @export
+#'
+#' @examples
+preprocess_2018_health <- function() {
+  1
+}
+```
+
+```{r examples-preprocess_2018_health}
+preprocess_2018_health()
+```
+
+```{r tests-preprocess_2018_health}
+test_that("preprocess_2018_health works", {
+  expect_true(inherits(preprocess_2018_health, "function"))
+})
+```
+
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+fusen::inflate(flat_file = "dev/flat_preprocess_2018_health.Rmd", vignette_name = "Preprocessing 2018 Health Status")
+```
+

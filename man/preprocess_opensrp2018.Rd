@@ -2,13 +2,20 @@
 % Please edit documentation in R/preprocess_opensrp2018.R
 \name{preprocess_opensrp2018}
 \alias{preprocess_opensrp2018}
-\title{Title}
+\title{Pipeline Step to Preprocess Open Census 2018 Data}
 \usage{
 preprocess_opensrp2018(open_census)
 }
+\value{
+tibble
+}
 \description{
-Description
+This function wraps up the preprocessing decisions made in the notebook Cohort 2018 Preprocessing
+into a single function. This function is then integrated into the {targets} pipeline in _targets.R.
 }
 \examples{
 preprocess_opensrp2018(open_census) \%>\% summary()
+}
+\seealso{
+\href{../articles/cohort-2018-preprocessing.html}{Vignette: Cohort 2018 Preprocessing}
 }

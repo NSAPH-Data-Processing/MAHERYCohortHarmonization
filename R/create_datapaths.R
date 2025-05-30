@@ -12,7 +12,7 @@
 #' @examples
 #' if(FALSE) {
 #'   create_datapaths()
-#' } 
+#' }
 create_datapaths <- function() {
   # Define main data directory and subdirectories
   base_dir <- here::here("data")
@@ -52,5 +52,4 @@ create_datapaths <- function() {
     message("✅ Data environment initialized at: ", base_dir)
     return(TRUE)
   }
-
 }

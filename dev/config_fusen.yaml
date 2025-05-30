@@ -1,6 +1,21 @@
+flat_cohort_household_heads.Rmd:
+  path: dev/flat_cohort_household_heads.Rmd
+  state: active
+  R: R/preprocess_2018_household_heads.R
+  tests: tests/testthat/test-preprocess_2018_household_heads.R
+  vignettes: vignettes/preprocessing-2018-household-heads.Rmd
+  inflate:
+    flat_file: dev/flat_cohort_household_heads.Rmd
+    vignette_name: Preprocessing 2018 Household Heads
+    open_vignette: true
+    check: false
+    document: true
+    overwrite: ask
+    clean: ask
+    codecov: false
 flat_full.Rmd:
   path: dev/flat_full.Rmd
-  state: false
+  state: deprecated
   R:
   - R/my_median.R
   - R/my_other_median.R
@@ -22,7 +37,9 @@ flat_preprocess_2018.Rmd:
   state: active
   R:
   - R/audit_categorical_cleaning.R
+  - R/calculate_age_group.R
   - R/clean_opencensus_dob.R
+  - R/fix_duplicate_misspelled_names.R
   - R/generate_uid.R
   - R/preprocess_opensrp2018.R
   - R/recode_opensrp_education.R
@@ -31,12 +48,13 @@ flat_preprocess_2018.Rmd:
   - tests/testthat/test-clean_opencensus_dob.R
   - tests/testthat/test-recode_opensrp_education.R
   - tests/testthat/test-generate_uid.R
+  - tests/testthat/test-fix_duplicate_misspelled_names.R
   - tests/testthat/test-preprocess_opensrp2018.R
-  vignettes: vignettes/cohort-2018-preprocessing.Rmd
+  vignettes: vignettes/opensrp-cohort-2018-preprocessing.Rmd
   inflate:
     flat_file: dev/flat_preprocess_2018.Rmd
-    vignette_name: Cohort 2018 Preprocessing
-    open_vignette: true
+    vignette_name: OpenSRP Cohort 2018 Preprocessing
+    open_vignette: false
     check: false
     document: true
     overwrite: ask

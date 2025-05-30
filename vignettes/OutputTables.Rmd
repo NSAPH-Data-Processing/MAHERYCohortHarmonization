@@ -1,0 +1,51 @@
+---
+title: "Pipeline Outputs"
+author: "Tinashe M. Tapera"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Pipeline Outputs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+library(here)
+library(DT)
+library(targets)
+tar_load_everything(, store = here::here("_targets"))
+```
+
+In this vignette, we provide interactive tables to view the outputs of the pipeline. The tables are rendered using the `DT` package, which provides a simple way to create interactive tables in R.
+
+## Cohort Demographics
+
+The cohort demographics are the base of the project. The targets object `cohort_2018` is what generates this table:
+
+```{r, results='asis'}
+datatable(cohort_2018)
+```
+
+The preprocessing details for this step are in the notebook 
+
+## Cohort Household Heads
+
+Head of household are an important demographic variable. In Madagascar, as in many countries, the household head
+(or chef de ménage) is a key unit of reference in population-level analyses, especially in surveys, censuses, 
+and administrative datasets. In Madagascar, household headship can also reflect traditional norms and ethnic
+practices, which might influence the structure and function of households. Extended family households with multiple
+generations under one roof are common in some regions, and the definition of “head” may differ from a purely economic
+or legal interpretation. The targets object `cohort_2018_households` is what generates this table:
+
+```{r, results='asis'}
+datatable(cohort_2018_households)
+```
+
+## Pipeline
+
+The `targets` package is how we manage the data engineering pipeline. 

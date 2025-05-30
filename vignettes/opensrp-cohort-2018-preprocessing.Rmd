@@ -1,8 +1,8 @@
 ---
-title: "Cohort 2018 Preprocessing"
+title: "OpenSRP Cohort 2018 Preprocessing"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Cohort 2018 Preprocessing}
+  %\VignetteIndexEntry{OpenSRP Cohort 2018 Preprocessing}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,7 +23,7 @@ library(MAHERYCohortHarmonization)
 
 
 
-# preprocess_2018
+# preprocess_srp2018
 
 In this notebook, we're exploring and preprocessing the 2018 data from OpenSRP.
 The function will ultimately preprocess the data so that it can be harmonized
@@ -33,17 +33,19 @@ to denote that the column has been cleaned and is being kept for analysis.
 What is OpenSRP?
 
 What is OpenSRP? It appears OpenSRP should cover year 2018. What is it and what does it survey?
-> Open SRP is a software to collect data. We collaborated with an Indonesian-based researchin 2018 that managed and stored our data. Their website does not exist anymore. That is the first platform we used for the ongoing health surveillance surveys. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet.
+> Open SRP is a software to collect data. We collaborated with an Indonesian-based researchin 2018 that managed and stored our data. Their website does not exist anymore. That is the first platform we used for the ongoing health surveillance surveys. The data is stored in a flat file format.
 
 Load the targets data for prototyping:
 
 The OpenSRP file has a number of sheets:
 ```{r}
-library(targets)
-tar_load(opensrp)
-tar_load(opensrp_dict)
-
 library(here)
+library(targets)
+tar_load(opensrp, store = here::here("_targets"))
+tar_load(opensrp_dict, store = here::here("_targets"))
+
+devtools::load_all()
+
 library(dplyr)
 library(stringr)
 library(janitor)
@@ -169,9 +171,7 @@ open_census_ %>%
 
 
 There are a number of people who are listed as the same name, but
-with different IDs or member codes. We'll have to keep an eye on these.
-What we can probably do is code all of the other columns and check for anomalies
-there.
+with different IDs or member codes.
 ```{r}
 open_census_ %>%
   mutate(name_family_member_clean = name_family_member %>%
@@ -181,6 +181,8 @@ open_census_ %>%
   ) -> open_census_
 ```
 
+
+This will be dealt with when we create unique IDs below.
 
 ### DoB
 
@@ -452,9 +454,13 @@ open_census_ %>%
 
 We can wrap that up in the `preprocess_opensrp2018()` function.
 
+Additionally, we'll include a function to calculate someone's age group:
+    
+  
+
 ### Generating Unique IDs
 
-As a final step, we're also going to generate the UUID for each
+We're also going to generate the UUID for each
 individual. This is important for the final output, as we will
 be using this to merge with the other datasets. The previous method
 of creating a UUID was to paste a few variables, but this is
@@ -467,6 +473,81 @@ The salt will be stored in the R environment as a secret variable.
 ```{r example-generate_uid}
 generate_uid(salt = "cohort_secret", "John", "Doe", "1990-01-01")
 ```
+
+
+### Duplicate and Mispelled Names
+
+There is a case where there are two households heads with the same name `Eddy`.
+Let's look for more of these:
+```{r}
+open_census_ %>% 
+  group_by(name_family_member_clean, hh_head_name_clean) %>% 
+  summarize(n = n()) %>% 
+  filter( n > 1)
+```
+
+
+These folks have cases where there are duplicates.
+
+There are also cases where there are mispelled names, or
+where the same person is listed with different names:
+
+- Name: be jenore, hh_head_name: be jenole
+- Name: juliette, hh_head_name: be juliette
+- Name: berthine, hh_head_name: bertine 
+- Name: bevita, hh_head_name: bsvita
+- Name: jean bemiao hh_head_name: jan bemiao
+- Name: jean erique hh_head_name: jean ericque
+- Name: marrgelin hh_head_name: margelin
+- Name: orelin frasoa hh_head_name: orelin françois
+- Name: philippe hh_head_name: phillippe
+- Name: raherimanana jean fredo hh_head_name: raherimananajean fredo
+- Name: randriamanantena hh_head_name: randriamanantena honorat
+- Name: ravalomanana junel hh_head_name: ravalomanana junelle
+- Name: jean yves hh_head_name: renaud
+- Name: rozadison jean barthelemy hh_head_name: rozaddison jean barthelemy
+- Name: tianavelo zara aime hh_head_name: tianavelo
+- Name: avoavy clovis hh_head_name: voavy clovis
+- Name: zenal ture hh_head_name: zanal ture
+- Name: be zela hh_head_name: be zela (duplicate)
+- Name: chely (probably married, both same name)
+- Name: delore (ditto)
+- Name: duplicated eddy
+
+We are only going to need this for examples where we are sure the two individuals are the same.
+For those who aren't, we have to filter these out and select the correct one:
+
+1. Be Zela: This individual is likely the head of household; the census
+was taken on two separate occasions, but the entries are largely the same.
+Importantly, this is the case where we have a birthday with dob_actual = "yes",
+but the month is "month idr". However, there are two separate entries for the be zela
+household head, so we should keep both.
+
+2. Bilina Victor: Data are identical except for the submission time of the survey,
+so we can use one row here.
+
+3. Chely: I'm not sure about these two. They have very similar survey
+submission times, but different sexes. I am guessing they are different people,
+but do not constitute separate households, since they were literally collected at the
+same time. I am tempted to remove this case entirely for the sake of not introducing
+noise into the data. For now, I'll keep them separate but make sure to check back
+later, and assign anyone with HH head name "Chely" to the same household.
+
+4. Delore: Also separate individuals as Chely
+
+5. Eddy: This is the case where we have two individuals with the same name, but different dates of census and DoBs. We can separate them by date.
+    
+  
+  
+```{r example-fix_duplicate_misspelled_names}
+#| eval: no
+
+open_census_ %>%
+  fix_duplicate_misspelled_names(name_col = name_family_member_clean, 
+                                 hh_col = hh_head_name_clean) -> open_census_
+```
+
+
 
 
 ### Pipeline Step Excution: preprocess_opensrp_2018

@@ -11,24 +11,29 @@ License: MIT + file LICENSE
 Imports: 
     digest,
     dplyr,
+    forcats,
     fs,
     googledrive,
     here,
+    janitor,
     lubridate,
     magrittr,
+    rlang,
     stats,
     stringr,
     tibble
 Suggests: 
-    forcats,
+    devtools,
+    DT,
     ggalluvial,
     ggplot2,
-    janitor,
     knitr,
+    pkgload,
     rmarkdown,
     skimr,
     targets,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tidyr
 VignetteBuilder: 
     knitr
 Config/fusen/version: 0.7.1

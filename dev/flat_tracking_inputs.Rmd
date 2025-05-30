@@ -180,7 +180,7 @@ has_drive_file_changed <- function(drive_resource, last_known_run_time=ymd_hms("
 }
 ```
   
-```{r example-has_drive_file_changed}
+```{r example-has_drive_file_changed, eval=FALSE}
 test_file <- "1X9pd4nOjl33zDFfTjw-_eFL7Qb9_g6VfVFDp1PPae94"
 has_drive_file_changed(test_file, lubridate::ymd_hms("2025-04-01 00:00:00", tz = "UTC"))
 ```
@@ -402,7 +402,7 @@ download_to_local <- function(f_regex, download_dir) {
 }
 ```
   
-```{r example-download_to_local}
+```{r example-download_to_local, eval=FALSE}
 authenticate_google_drive()
 test_file <- "openSRP_dictionary.xlsx"
 fpath <- download_to_local(test_file, here::here())

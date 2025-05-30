@@ -4,29 +4,30 @@
 #'
 #' Authenticate with Google Drive using the appropriate credentials
 #' The pipeline will not run if this step is not successful.
-#' 
+#'
 #' @importFrom googledrive drive_auth
-#' 
+#'
 #' @return TRUE if the authentication was successful
-#' 
+#'
 #' @export
 #'
 #' @examples
 #' authenticate_google_drive()
 authenticate_google_drive <- function() {
-  
   # Load the path to the authentication file
   path_to_auth <- Sys.getenv("GOOGLE_DRIVE_AUTH_JSON")
 
-  tryCatch({
-    
-    drive_auth(path = path_to_auth)
-    return(TRUE)
-
-  }, error = function(e) {
-    message("Authentication failed. Please check the path to the authentication file.")
-    message(e)
-    return(FALSE)
-  })
-
+  tryCatch(
+    {
+      drive_auth(path = path_to_auth)
+      return(TRUE)
+    },
+    error = function(e) {
+      message(
+        "Authentication failed. Please check the path to the authentication file."
+      )
+      message(e)
+      return(FALSE)
+    }
+  )
 }

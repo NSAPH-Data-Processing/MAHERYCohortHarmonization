@@ -24,7 +24,7 @@ to denote that the column has been cleaned and is being kept for analysis.
 What is OpenSRP?
 
 What is OpenSRP? It appears OpenSRP should cover year 2018. What is it and what does it survey?
-> Open SRP is a software to collect data. We collaborated with an Indonesian-based researchin 2018 that managed and stored our data. Their website does not exist anymore. That is the first platform we used for the ongoing health surveillance surveys. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet. The data is stored in a flat file format. We are working on a new platform to collect data, but we are not there yet.
+> Open SRP is a software to collect data. We collaborated with an Indonesian-based researchin 2018 that managed and stored our data. Their website does not exist anymore. That is the first platform we used for the ongoing health surveillance surveys. The data is stored in a flat file format.
 
 ```{r development-preprocess_2018}
 # Prepare the code of your function here
@@ -36,6 +36,7 @@ library(targets)
 library(skimr)
 library(forcats)
 library(lubridate)
+library(rlang)
 library(googledrive)
 library(ggplot2)
 library(ggalluvial)
@@ -55,11 +56,13 @@ tar_load(opensrp_dict)
 The OpenSRP file has a number of sheets:
 
 ```{r}
-library(targets)
-tar_load(opensrp)
-tar_load(opensrp_dict)
-
 library(here)
+library(targets)
+tar_load(opensrp, store = here::here("_targets"))
+tar_load(opensrp_dict, store = here::here("_targets"))
+
+devtools::load_all()
+
 library(dplyr)
 library(stringr)
 library(janitor)
@@ -92,11 +95,21 @@ A function for plotting the mapping of categorical variables from raw to clean, 
 ```
   
 ```{r function-audit_categorical_cleaning}
-#' Title
-#' 
-#' Description
-#' 
-#' @return
+#' Audit and visualize categorical variable cleaning
+#'
+#' This function helps audit the transformation of raw categorical data into cleaned categories.
+#' It displays a summary table of the mapping from raw to cleaned values, and optionally creates
+#' an alluvial plot to visualize how categories have been collapsed or recoded.
+#'
+#' @param df A data frame containing the raw and cleaned categorical columns.
+#' @param raw_col Unquoted column name for the raw, uncleaned categorical variable.
+#' @param cleaned_col Unquoted column name for the cleaned or recoded categorical variable.
+#' @param var_name Optional character string to name the variable in printed and plotted output.
+#' If NULL, the name of `raw_col` is used.
+#' @param plot Logical, default `TRUE`. If `TRUE`, an alluvial plot of the mapping is generated.
+#'
+#' @return A tibble showing the frequency of mappings between raw and cleaned categories.
+#' The result is returned invisibly (use `invisible()`), but printed by default for inspection.
 #' 
 #' @export
 audit_categorical_cleaning <- function(df, raw_col, cleaned_col, var_name = NULL, plot = TRUE) {
@@ -228,9 +241,7 @@ open_census_ %>%
 ```
 
 There are a number of people who are listed as the same name, but
-with different IDs or member codes. We'll have to keep an eye on these.
-What we can probably do is code all of the other columns and check for anomalies
-there.
+with different IDs or member codes.
 
 ```{r}
 open_census_ %>%
@@ -240,6 +251,8 @@ open_census_ %>%
     str_remove_all(",")
   ) -> open_census_
 ```
+
+This will be dealt with when we create unique IDs below.
 
 ### DoB
 
@@ -270,14 +283,35 @@ their DoB as January 1st of that year (we'll flag these though as `dob_estimated
 Below is the function that makes our DoBs:
   
 ```{r function-clean_opencensus_dob}
-#' Clean OpenCensus SRP Date of Birth
-#' 
-#' This function cleans the date of birth (DoB) data from the Open Census SRP dataset.
-#' 
-#' @return tibble
-#' @importFrom lubridate dmy
+#' Clean and standardize date of birth information from OpenCensus data
+#'
+#' This function processes date of birth fields from OpenCensus survey data, including
+#' cleaning inconsistencies, translating French month names, handling likely placeholder
+#' values, and producing a unified `Date` column for further analysis.
+#'
+#' It also flags entries where the date of birth is likely to be estimated or unreliable.
+#'
+#' @param open_census_ A data frame containing raw date of birth fields, including `dob_date`,
+#' `dob_month`, `dob_year`, and `dob_actual`.
+#'
+#' @return A data frame with the following new or cleaned columns:
+#' \describe{
+#'   \item{dob_date_clean}{A numeric day value with invalid values (e.g., 999) replaced with 1.}
+#'   \item{dob_month_clean}{A numeric month string converted from potentially French or ambiguous month names.}
+#'   \item{dob_estimated}{A logical column indicating whether the date is likely estimated.}
+#'   \item{dob_clean}{A `Date` object constructed from the cleaned day, month, and year values.}
+#' }
+#'
+#' @details
+#' - French month names such as "janvier", "février", and "décembre" are translated to English and then to numeric form.
+#' - Dates where `dob_actual == "No"`, `dob_month == "month idr"`, or `dob_date` > 31 are flagged as estimated.
+#' - Any `dob_date` greater than 31 (e.g., 999 as a placeholder) is replaced with 1.
+#' - If `dob_month` is "month idr", it is assumed to be January for imputation.
+#'
 #' @importFrom dplyr mutate case_when
 #' @importFrom stringr str_to_lower str_replace_all
+#' @importFrom lubridate dmy
+#'
 #' @export
 clean_opencensus_dob <- function(open_census_){
   
@@ -427,11 +461,35 @@ open_census_$ethnicity %>% table()
 The recoding of education is done like so:
       
 ```{r function-recode_opensrp_education}
-#' Recode OpenSRP Education Levels
-#' 
-#' Description
-#' 
-#' @return
+#' Recode and order education levels from OpenSRP data
+#'
+#' This function recodes raw education responses from OpenSRP datasets into
+#' standardized, English-labeled education levels. It also converts the result
+#' into an ordered factor reflecting increasing levels of formal education.
+#'
+#' @param df A data frame that includes a column named `education`, containing
+#' raw education labels such as `"Epp"`, `"Ceg"`, `"Lycee"`, `"University"`, or `"None"`.
+#'
+#' @return A data frame with two additional columns:
+#' \describe{
+#'   \item{education_level}{A character vector with recoded education categories.}
+#'   \item{education_level_clean}{An ordered factor with levels:
+#'     \code{"no_formal_education"} < \code{"primary"} < \code{"lower_secondary"} <
+#'     \code{"upper_secondary"} < \code{"higher_education"}.}
+#' }
+#'
+#' @details
+#' The recoding is based on the following mapping:
+#' \tabular{ll}{
+#'   "Epp"       \tab "primary"\cr
+#'   "Ceg"       \tab "lower_secondary"\cr
+#'   "Lycee"     \tab "upper_secondary"\cr
+#'   "University"\tab "higher_education"\cr
+#'   "None"      \tab "no_formal_education"
+#' }
+#'
+#' @importFrom dplyr mutate recode
+#' @importFrom forcats fct_relevel
 #' 
 #' @export
 recode_opensrp_education <- function(df){
@@ -621,9 +679,49 @@ open_census_ %>%
 
 We can wrap that up in the `preprocess_opensrp2018()` function.
 
+Additionally, we'll include a function to calculate someone's age group:
+    
+```{r development-calculate_age_group}
+# You can prepare the code of the calculate_age_group() function here
+```
+  
+```{r function-calculate_age_group}
+#' Calculate Age Group from Date of Birth
+#'
+#' @param dob A vector of date-of-birth values (class Date)
+#' @param reference_date A single date to calculate age relative to (defaults to today)
+#' @return A character vector of age groups
+#' @export
+calculate_age_group <- function(dob, reference_date = Sys.Date()) {
+  if (!inherits(dob, "Date")) stop("Input 'dob' must be a Date vector")
+
+  age <- lubridate::interval(dob, reference_date) / lubridate::years(1)
+  age <- floor(age)
+
+  cut(
+    age,
+    breaks = c(-Inf, 0, 1, 4, 9, 14, 19, 24, 49, 64, Inf),
+    labels = c(
+      "Under 1",
+      "1–4",
+      "5–9",
+      "10–14",
+      "15–19",
+      "20–24",
+      "25–49",
+      "50–64",
+      "65+",
+      "Unknown"  # this one is just a filler, but not needed unless age has NA
+    )[1:10],  # only include 10 labels
+    right = TRUE,
+    include.lowest = TRUE
+  )
+}
+```
+
 ### Generating Unique IDs
 
-As a final step, we're also going to generate the UUID for each
+We're also going to generate the UUID for each
 individual. This is important for the final output, as we will
 be using this to merge with the other datasets. The previous method
 of creating a UUID was to paste a few variables, but this is
@@ -632,13 +730,26 @@ To ensure security, we'll use the `digest` package and a secure [salt](https://e
 The salt will be stored in the R environment as a secret variable.
   
 ```{r function-generate_uid}
-#' Title
-#' 
-#' Description
-#' 
+#' Generate a short, deterministic unique identifier
+#'
+#' This function creates a short hash-based unique identifier (UID) by combining a salt and 
+#' any number of additional inputs. It is useful for generating reproducible IDs in a pipeline, 
+#' especially when the same inputs should always result in the same UID.
+#'
+#' @param salt A character string used as the base salt for hashing. Defaults to `"cohort_secret"`.
+#' @param ... Additional values to be combined with the salt to generate the UID.
+#' Typically, these might include identifiers such as names, dates, or other stable fields.
+#' @param nchar Integer specifying the number of characters to return from the hashed result.
+#' Default is 6.
+#'
+#' @return A character string representing a short, deterministic unique identifier.
+#'
+#' @details
+#' The function uses the SHA-256 hash algorithm (via the `digest` package) and truncates
+#' the result to the desired number of characters. The UID is deterministic: the same inputs 
+#' will always produce the same output.
+#'
 #' @importFrom digest digest
-#' 
-#' @return
 #' 
 #' @export
 generate_uid <- function(salt = "cohort_secret", ..., nchar=6) {
@@ -658,17 +769,159 @@ test_that("generate_uid works", {
 generate_uid(salt = "cohort_secret", "John", "Doe", "1990-01-01")
 ```
 
+### Duplicate and Mispelled Names
+
+There is a case where there are two households heads with the same name `Eddy`.
+Let's look for more of these:
+
+```{r}
+open_census_ %>% 
+  group_by(name_family_member_clean, hh_head_name_clean) %>% 
+  summarize(n = n()) %>% 
+  filter( n > 1)
+```
+
+These folks have cases where there are duplicates.
+
+There are also cases where there are mispelled names, or
+where the same person is listed with different names:
+
+- Name: be jenore, hh_head_name: be jenole
+- Name: juliette, hh_head_name: be juliette
+- Name: berthine, hh_head_name: bertine 
+- Name: bevita, hh_head_name: bsvita
+- Name: jean bemiao hh_head_name: jan bemiao
+- Name: jean erique hh_head_name: jean ericque
+- Name: marrgelin hh_head_name: margelin
+- Name: orelin frasoa hh_head_name: orelin françois
+- Name: philippe hh_head_name: phillippe
+- Name: raherimanana jean fredo hh_head_name: raherimananajean fredo
+- Name: randriamanantena hh_head_name: randriamanantena honorat
+- Name: ravalomanana junel hh_head_name: ravalomanana junelle
+- Name: jean yves hh_head_name: renaud
+- Name: rozadison jean barthelemy hh_head_name: rozaddison jean barthelemy
+- Name: tianavelo zara aime hh_head_name: tianavelo
+- Name: avoavy clovis hh_head_name: voavy clovis
+- Name: zenal ture hh_head_name: zanal ture
+- Name: be zela hh_head_name: be zela (duplicate)
+- Name: chely (probably married, both same name)
+- Name: delore (ditto)
+- Name: duplicated eddy
+
+We are only going to need this for examples where we are sure the two individuals are the same.
+For those who aren't, we have to filter these out and select the correct one:
+
+1. Be Zela: This individual is likely the head of household; the census
+was taken on two separate occasions, but the entries are largely the same.
+Importantly, this is the case where we have a birthday with dob_actual = "yes",
+but the month is "month idr". However, there are two separate entries for the be zela
+household head, so we should keep both.
+
+2. Bilina Victor: Data are identical except for the submission time of the survey,
+so we can use one row here.
+
+3. Chely: I'm not sure about these two. They have very similar survey
+submission times, but different sexes. I am guessing they are different people,
+but do not constitute separate households, since they were literally collected at the
+same time. I am tempted to remove this case entirely for the sake of not introducing
+noise into the data. For now, I'll keep them separate but make sure to check back
+later, and assign anyone with HH head name "Chely" to the same household.
+
+4. Delore: Also separate individuals as Chely
+
+5. Eddy: This is the case where we have two individuals with the same name, but different dates of census and DoBs. We can separate them by date.
+    
+```{r development-fix_duplicate_misspelled_names}
+# You can prepare the code of the fix_duplicate_names() function here
+```
+  
+```{r function-fix_duplicate_misspelled_names}
+#' Add ordinal suffixes to repeated household head names by date
+#'
+#' This function modifies a data frame by appending Roman numeral suffixes
+#' (e.g., " ii", " iii") to a specific household head name that appears more than once.
+#' The suffixes are added in chronological order based on a date column, beginning with
+#' the second occurrence. Only the specified name is modified; all others remain unchanged.
+#'
+#' @param df A data frame containing at least the household name and date columns.
+#' @param target_name A character string specifying the exact name to deduplicate and label (e.g., "be zela").
+#' @param name_col A column in `df` that contains the household head names. Defaults to `hh_head_name_clean`.
+#' @param date_col A column in `df` that contains an identifier for the recorded date. Defaults to `submission_date`.
+#'
+#' @return A data frame with the specified name deduplicated by date, using ordinal suffixes.
+#' Other names remain unchanged.
+#' 
+#' @export
+fix_duplicate_misspelled_names <- function(df, name_col = name, hh_col = hh_head_name) {
+  name_col_sym <- rlang::enquo(name_col)
+  hh_col_sym <- rlang::enquo(hh_col)
+
+  # Hand-curated corrections
+  correction_map <- tibble::tibble(
+    name = c(
+      "be jenore", "juliette", "berthine", "bevita", "jean bemiao", 
+      "jean erique", "marrgelin", "orelin frasoa", "philippe", 
+      "raherimanana jean fredo", "randriamanantena", 
+      "ravalomanana junel", "jean yves", "rozadison jean barthelemy",
+      "tianavelo zara aime", "avoavy clovis", "zenal ture", "emilien", "geralson", "randrianasoavina"
+    ),
+    corrected = c(
+      "be jenole", "be juliette", "bertine", "bsvita", "jan bemiao",
+      "jean ericque", "margelin", "orelin françois", "phillippe",
+      "raherimananajean fredo", "randriamanantena honorat",
+      "ravalomanana junelle", "renaud", "rozaddison jean barthelemy",
+      "tianavelo", "voavy clovis", "zanal ture", "emillien", "geralison", "randrianasoaviana"
+    )
+  )
+
+  df %>%
+    dplyr::left_join(correction_map, by = setNames("name", rlang::as_name(name_col_sym))) %>%
+    dplyr::mutate(!!rlang::as_name(name_col_sym) := dplyr::coalesce(corrected, !!name_col_sym)) %>%
+    dplyr::select(-corrected) %>%
+
+    # set eddy ii to corrected name
+    dplyr::mutate(!!rlang::as_name(name_col_sym) := 
+      dplyr::case_when(
+        !!name_col_sym == "eddy" & str_starts(id, "A3dd6eda") ~ "eddy ii",
+        TRUE ~ !!name_col_sym
+      )) %>%
+    dplyr::mutate(!!rlang::as_name(hh_col_sym) := 
+      dplyr::case_when(
+        str_starts(id, "A3dd6eda") ~ "eddy ii",
+        str_starts(id, "48149ba9") ~ "kalo jeannette",
+        TRUE ~ !!hh_col_sym
+      ))
+}
+```
+  
+```{r example-fix_duplicate_misspelled_names, eval=FALSE}
+open_census_ %>%
+  fix_duplicate_misspelled_names(name_col = name_family_member_clean, 
+                                 hh_col = hh_head_name_clean) -> open_census_
+```
+
+
+```{r tests-fix_duplicate_misspelled_names}
+test_that("fix_duplicate_misspelled_names works", {
+  expect_true(inherits(fix_duplicate_misspelled_names, "function")) 
+})
+```
+
+
 ### Pipeline Step Excution: preprocess_opensrp_2018
 
 The final function will take the Open Census data and run it through
 the pipeline we have created.
 
 ```{r function-preprocess_opensrp2018}
-#' Title
+#' Pipeline Step to Preprocess Open Census 2018 Data
 #' 
-#' Description
+#' This function wraps up the preprocessing decisions made in the notebook Cohort 2018 Preprocessing
+#' into a single function. This function is then integrated into the {targets} pipeline in _targets.R.
 #' 
-#' @return
+#' #' @seealso \href{../articles/cohort-2018-preprocessing.html}{Vignette: Cohort 2018 Preprocessing}
+#' 
+#' @return tibble
 #' 
 #' @export
 preprocess_opensrp2018 <- function(open_census){
@@ -715,12 +968,19 @@ preprocess_opensrp2018 <- function(open_census){
     ) %>%
     mutate(marital_status_clean = marital_status %>% str_to_lower() %>% as_factor()) %>%
     mutate(sex_clean =  sex %>% str_to_lower() %>% as_factor()) %>%
+    fix_duplicate_misspelled_names(name_col = name_clean, 
+                                 hh_col = hh_head_name_clean) %>%
+    mutate(original_id_clean = id) %>%
+    mutate(submission_date_clean = ymd(submission_date)) %>%
+    mutate(age_group_clean = calculate_age_group(dob_clean)) %>%
     select(contains("clean")) %>%
     select(-dob_date_clean, -dob_month_clean) %>%
     rename_all(~ str_replace(., "_clean", "")) %>%
     rowwise() %>%
     mutate(uuid = generate_uid(salt=Sys.getenv("UUID_SALT"), name, hh_head_name, as.character(dob))) %>%
     ungroup() %>%
+    # this removes one row of duplicates from bilina victor
+    distinct() %>%
     select(uuid, everything())
 }
 ```
@@ -738,7 +998,7 @@ test_that("preprocess_opensrp2018 works", {
 ```{r development-inflate, eval=FALSE}
 # Run but keep eval=FALSE to avoid infinite loop
 # Execute in the console directly
-fusen::inflate(flat_file = "dev/flat_preprocess_2018.Rmd", vignette_name = "Cohort 2018 Preprocessing", check=FALSE)
+fusen::inflate(flat_file = "dev/flat_preprocess_2018.Rmd", vignette_name = "OpenSRP Cohort 2018 Preprocessing", check=FALSE, open_vignette = FALSE)
 ```
 
 
