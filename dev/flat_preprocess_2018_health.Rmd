@@ -236,11 +236,21 @@ With that, we can implement it in the function:
 ```
   
 ```{r function-create_health_diagnoses}
-#' Title
-#' 
-#' Description
-#' 
-#' @return
+#' Create Harmonized Health Diagnosis Variables
+#'
+#' This function takes a dataframe with a column of raw health diagnoses (`prior_diagnosis`)
+#' in Malagasy or local terms, and returns a modified dataframe with three new variables:
+#' - `diagnosis_english`: a harmonized, readable label in English
+#' - `diagnosis_icd10_category`: a corresponding broad ICD-10 category name
+#' - `diagnosis_icd10_code`: the ICD-10 code range (e.g., "K00–K95")
+#'
+#' The mappings are based on field-specific translations and align with global health reporting
+#' frameworks such as DHIS2 and ICD-10 Chapter-level groupings.
+#'
+#' @param df A dataframe containing a column `prior_diagnosis` with free-text or categorical health terms.
+#'
+#' @return A dataframe with additional columns: `diagnosis_english`, `diagnosis_icd10_category`, and `diagnosis_icd10_code`.
+#'
 #' 
 #' @export
 create_health_diagnoses <- function(df, diagnosis_lookup=malagasy_diagnosis_lookup_table){
@@ -321,8 +331,10 @@ create_health_diagnoses <- function(df, diagnosis_lookup=malagasy_diagnosis_look
   
 ```{r example-create_health_diagnoses, eval=FALSE}
 health_data_ %>% 
-  create_health_diagnoses(diagnosis_lookup = MAHERYCohortHarmonization::malagasy_diagnosis_lookup_table) %>%
-  rename(diagnosis_english_clean = diagnosis_english, diagnosis_icd10_code_clean = diagnosis_icd10_code) -> health_data_
+  create_health_diagnoses() -> health_data_
+  
+health_data_ %>%
+  summary()
 ```
   
 ```{r tests-create_health_diagnoses}
