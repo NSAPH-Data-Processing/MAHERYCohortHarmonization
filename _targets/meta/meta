@@ -1,20 +1,18 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-secure_access_true|stem|445854964aee0763|0161787e8a224ad1|65c2ad79a17e0cf8|2063295041||t20173.7488740019s|s48b|48|rds|local|vector|||1.037||
-data_directory_ready|stem|445854964aee0763|8349b394c26d9c20|0e21e1f9d366c379|1560426136||t20173.7497442671s|s48b|48|rds|local|vector|||0.013||
-freeze_date|stem|8fe444e4de187187|d74ff93bd8bf4232|2c530c1562a7fbd1|1444904303||t20221.7618350646s|s81b|81|rds|local|vector|||1.877||
-data_files|stem|8020d1dfae23eef2|a709d62512b8f653|061fbd5a2633cc20|22696647||t20221.7618356608s|s268b|268|rds|local|vector|||0.001||
-gdrive_files_have_NOT_changed|stem|445854964aee0763|91a83c96d7939126|de2fc3c5e7618e90|-1744538489||t20221.7618745126s|s48b|48|rds|local|vector|||3.321||
-guard_pipeline_freeze|stem|445854964aee0763|385416449eb5ba26|028d196dbf3efcac|-319528748||t20221.7618749542s|s48b|48|rds|local|vector|||0||
-raw_files|stem|d2372d8a8a208035|7bba0b92ed77fb5c|1690d3d8b616cf11|1129559970||t20221.7619047565s|s419b|419|rds|local|vector|||2.541||
-opensrp|stem|2d6f09d9bd7935da|b10ac69c3e14e366|ab77a6448e4e42da|157834436||t20221.7619146593s|s92069b|92069|rds|local|vector|||0.79||
-opensrp_dict|stem|84bc9746a907aa03|6b7cea87e71f3449|ab77a6448e4e42da|1583738572||t20221.7619166568s|s2684b|2684|rds|local|vector|||0.137||
 dharma2019|stem|4825cb2e2a638042|61bf58f120a242b2|ab77a6448e4e42da|286367251||t20221.8052996838s|s8569857b|8569857|rds|local|vector|||73.473||
 dharma2020|stem|2b3bd18c7585ab64|bdfdb84c73c65e86|ab77a6448e4e42da|1493587893||t20221.8053857347s|s2039412b|2039412|rds|local|vector|||3.869||
-fix_duplicate_hh_eddy|function|5d3e29f43a7598a4|||||||||||||||
-fix_duplicate_hh_names_eddy|function|5d3e29f43a7598a4|||||||||||||||
-fix_duplicate_hh_names_zela|function|acfbaa4e56c75e74|||||||||||||||
-fix_duplicate_names|function|28f748be3f962186|||||||||||||||
-cohort_2018_households_deid|stem|78d9bdca174f7b4b|40487b1c297e6d59|47610f9873128e1a|1048172492||t20237.7486429561s|s3593b|3593|rds|local|vector|||0.001||
+freeze_date|stem|8fe444e4de187187|d74ff93bd8bf4232|2c530c1562a7fbd1|1444904303||t20241.7578859693s|s81b|81|rds|local|vector|||0.376||
+secure_access_true|stem|445854964aee0763|0161787e8a224ad1|65c2ad79a17e0cf8|2063295041||t20241.7598844536s|s48b|48|rds|local|vector|||0.609||
+data_files|stem|8020d1dfae23eef2|a709d62512b8f653|061fbd5a2633cc20|22696647||t20241.7598847915s|s268b|268|rds|local|vector|||0.005||
+gdrive_files_have_NOT_changed|stem|445854964aee0763|91a83c96d7939126|de2fc3c5e7618e90|-1744538489||t20241.7657519845s|s48b|48|rds|local|vector|||3.111||
+guard_pipeline_freeze|stem|445854964aee0763|385416449eb5ba26|028d196dbf3efcac|-319528748||t20241.7657531852s|s48b|48|rds|local|vector|||0||
+data_directory_ready|stem|445854964aee0763|8349b394c26d9c20|0e21e1f9d366c379|1560426136||t20243.0410497519s|s48b|48|rds|local|vector|||0.026||
+raw_files|stem|07d1ae35633e55c5|7bba0b92ed77fb5c|1690d3d8b616cf11|1129559970||t20243.0420274598s|s367b|367|rds|local|vector|||76.679||
+opensrp|stem|2d6f09d9bd7935da|b10ac69c3e14e366|46ff1fcd4ef37d10|157834436||t20243.0420308597s|s92069b|92069|rds|local|vector|||0.207||
+opensrp_dict|stem|84bc9746a907aa03|6b7cea87e71f3449|46ff1fcd4ef37d10|1583738572||t20243.0420313047s|s2684b|2684|rds|local|vector|||0.011||
+cohort_2018|stem|9b20a8b0e3cec8a7|3e380e479541f9aa|52773051c0cd8d32|1174292200||t20243.5863276328s|s15875b|15875|rds|local|vector|||0.428|There was 1 warning in `mutate()`. ℹ In argument: `dob_clean = `%>%`(...)`. Caused by warning: !  7 failed to parse.|
+cohort_2018_households|stem|6ea6915fc7a73e10|a1bfb9903ee160b0|35f26bd0dde383f6|173768387||t20243.5864923299s|s7028b|7028|rds|local|vector|||0.135||
+cohort_2018_deid|stem|c534a539a896900e|c68bcdcb0c41e0ee|69bd5cfbe9aff37a|138827682||t20243.5867195984s|s11997b|11997|rds|local|vector|||0.006||
 recode_opensrp_education|function|4152ce2ada5397e9
 calculate_age_group|function|ec37f1ca39100ac6
 clean_opencensus_dob|function|2e615e9ad65ae5e8
@@ -26,12 +24,10 @@ my_median|function|d311d35c99082065
 mahery_input_files|function|47cec2ed29606d73
 sub_median|function|b7edf9b2a71ee8bb
 download_to_local|function|69d15bf9b93a48a7
-.Random.seed|object|6b6f0be26908f6b2
+.Random.seed|object|b010791a053c4353
 create_datapaths|function|0efd8fbe85029549
 preprocess_2018_household_heads|function|51556eca56736a38
 preprocess_opensrp2018|function|1c59ff14befad656
 has_drive_file_changed|function|8f3ab0a0e21f3d7a
 my_other_median|function|db108af6e06aa435
-cohort_2018|stem|baf49990a12e9c28|3e380e479541f9aa|52773051c0cd8d32|1174292200||t20237.8348726523s|s15864b|15864|rds|local|vector|||0.468|There was 1 warning in mutate.ℹ In argument dob_clean  ....Caused by warning  7 failed to parse.|
-cohort_2018_households|stem|b372fbd824beb79d|a1bfb9903ee160b0|a84bb9febd3e1077|173768387||t20237.8348739316s|s7008b|7008|rds|local|vector|||0.062||
-cohort_2018_deid|stem|99c2bc5aae4681b9|c68bcdcb0c41e0ee|fa2cecf4527b42de|138827682||t20237.8348743923s|s11993b|11993|rds|local|vector|||0.002||
+cohort_2018_households_deid|stem|1279501302d66ab2|40487b1c297e6d59|448892a7cbdce46a|1048172492||t20243.586786716s|s3597b|3597|rds|local|vector|||0.005||

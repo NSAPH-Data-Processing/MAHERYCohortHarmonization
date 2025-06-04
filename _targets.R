@@ -183,7 +183,8 @@ list(
       map(set_names(sheet_names), function(x) {
         read_excel(raw_files$output_path[4], sheet = x)
       })
-    }
+    },
+    error = "trim"
   ),
   tar_target(
     name = dharma2020,
