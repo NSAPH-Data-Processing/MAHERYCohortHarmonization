@@ -222,5 +222,13 @@ list(
       cohort_2018_households %>%
         select(-original_id)
     }
+  ),
+  # healthcare data for the 2018 cohort
+  tar_target(
+    name = cohort_2018_healthcare,
+    command = {
+      open_census <- opensrp$`Open census`
+      preprocess_2018_health(open_census, cohort_2018_deid)
+    }
   )
 )

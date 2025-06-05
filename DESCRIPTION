@@ -20,6 +20,7 @@ Imports:
     janitor,
     lubridate,
     magrittr,
+    purrr,
     rlang,
     stats,
     stringr,

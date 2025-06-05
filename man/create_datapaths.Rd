@@ -14,5 +14,5 @@ Adds a .gitignore to exclude files but keep the folder structure.
 \examples{
 if(FALSE) {
   create_datapaths()
-}
+} 
 }

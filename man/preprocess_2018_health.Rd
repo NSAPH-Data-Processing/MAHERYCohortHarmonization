@@ -4,7 +4,11 @@
 \alias{preprocess_2018_health}
 \title{preprocess_2018_health Title}
 \usage{
-preprocess_2018_health()
+preprocess_2018_health(
+  open_census,
+  cohort_2018_deid,
+  diagnosis_lookup = malagasy_diagnosis_lookup_table
+)
 }
 \value{
 1
@@ -13,5 +17,7 @@ preprocess_2018_health()
 preprocess_2018_health Title
 }
 \examples{
-preprocess_2018_health()
+preprocess_2018_health(open_census, cohort_2018_deid) -> health_data_
+
+skim(health_data_)
 }

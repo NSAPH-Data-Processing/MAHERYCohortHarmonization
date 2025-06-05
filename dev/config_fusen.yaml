@@ -7,7 +7,7 @@ flat_cohort_household_heads.Rmd:
   inflate:
     flat_file: dev/flat_cohort_household_heads.Rmd
     vignette_name: Preprocessing 2018 Household Heads
-    open_vignette: true
+    open_vignette: false
     check: false
     document: true
     overwrite: ask
@@ -26,8 +26,8 @@ flat_full.Rmd:
   inflate:
     flat_file: dev/flat_full.Rmd
     vignette_name: Get started
-    open_vignette: true
-    check: true
+    open_vignette: false
+    check: false
     document: true
     overwrite: ask
     clean: ask
@@ -64,11 +64,15 @@ flat_preprocess_2018_health.Rmd:
   path: dev/flat_preprocess_2018_health.Rmd
   state: active
   R:
+  - R/clean_2018_pregnancy.R
+  - R/clean_2018_vaccinations.R
   - R/create_health_diagnoses.R
   - R/preprocess_2018_health.R
-  - R/reading-in-the-data.R
+  - R/health-care-access-diagnoses.R
   tests:
   - tests/testthat/test-create_health_diagnoses.R
+  - tests/testthat/test-clean_2018_vaccinations.R
+  - tests/testthat/test-clean_2018_pregnancy.R
   - tests/testthat/test-preprocess_2018_health.R
   vignettes: vignettes/preprocessing-2018-health-status.Rmd
   inflate:
@@ -98,7 +102,7 @@ flat_tracking_inputs.Rmd:
   inflate:
     flat_file: dev/flat_tracking_inputs.Rmd
     vignette_name: Tracking Input Data
-    open_vignette: true
+    open_vignette: false
     check: false
     document: true
     overwrite: ask

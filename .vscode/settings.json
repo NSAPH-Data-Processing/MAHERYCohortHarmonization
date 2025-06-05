@@ -6,14 +6,14 @@
         }
     },
     "livePreview.defaultPreviewPath": "/docs/index.html",
-    "r.rterm.linux": "/usr/local/bin/radian",
+    "r.rterm.linux": "/n/home03/ttapera/.conda/envs/mahery-cohort-harmonization/bin/radian",
     "r.bracketedPaste": true,
     "r.sessionWatcher": true,
     "r.alwaysUseActiveTerminal": true,
     "r.lsp.path": "/usr/local/bin/R",
-    "r.rpath.linux": "/usr/local/bin/R",
-    "r.libPaths": [
-        "/home/rstudio/.cache/R/renv/library/MAHERYCohortHarmonization-947985a6/linux-ubuntu-noble/R-4.4/aarch64-unknown-linux-gnu",
-        "/home/rstudio/.cache/R/renv/sandbox/linux-ubuntu-noble/R-4.4/aarch64-unknown-linux-gnu/25ebdc09"
-    ]
+    "r.rpath.linux": "/n/sw/helmod-rocky8/apps/Core/R/4.4.3-fasrc01/bin/R",
+    //"r.libPaths": [
+        //"/home/rstudio/.cache/R/renv/library/MAHERYCohortHarmonization-947985a6/linux-ubuntu-noble/R-4.4/aarch64-unknown-linux-gnu",
+        //"/home/rstudio/.cache/R/renv/sandbox/linux-ubuntu-noble/R-4.4/aarch64-unknown-linux-gnu/25ebdc09"
+    //]
 }

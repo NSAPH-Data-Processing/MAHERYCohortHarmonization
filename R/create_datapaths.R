@@ -12,7 +12,7 @@
 #' @examples
 #' if(FALSE) {
 #'   create_datapaths()
-#' }
+#' } 
 create_datapaths <- function() {
   # Define main data directory and subdirectories
   base_dir <- here::here("data")
@@ -26,6 +26,7 @@ create_datapaths <- function() {
 
   # Create folders
   fs::dir_create(full_paths)
+  purrr::walk(full_paths, Sys.chmod, mode = "0755")
 
   # Create .gitkeep files in each subdir to keep them in version control
   fs::file_create(fs::path(full_paths, ".gitkeep"))
@@ -52,4 +53,5 @@ create_datapaths <- function() {
     message("✅ Data environment initialized at: ", base_dir)
     return(TRUE)
   }
+
 }
