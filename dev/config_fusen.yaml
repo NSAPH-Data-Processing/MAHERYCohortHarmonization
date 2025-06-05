@@ -60,6 +60,26 @@ flat_preprocess_2018.Rmd:
     overwrite: ask
     clean: ask
     codecov: false
+flat_preprocess_2018_health.Rmd:
+  path: dev/flat_preprocess_2018_health.Rmd
+  state: active
+  R:
+  - R/create_health_diagnoses.R
+  - R/preprocess_2018_health.R
+  - R/reading-in-the-data.R
+  tests:
+  - tests/testthat/test-create_health_diagnoses.R
+  - tests/testthat/test-preprocess_2018_health.R
+  vignettes: vignettes/preprocessing-2018-health-status.Rmd
+  inflate:
+    flat_file: dev/flat_preprocess_2018_health.Rmd
+    vignette_name: Preprocessing 2018 Health Status
+    open_vignette: false
+    check: false
+    document: true
+    overwrite: ask
+    clean: ask
+    codecov: false
 flat_tracking_inputs.Rmd:
   path: dev/flat_tracking_inputs.Rmd
   state: active

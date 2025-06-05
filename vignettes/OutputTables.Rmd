@@ -18,7 +18,8 @@ knitr::opts_chunk$set(
 library(here)
 library(DT)
 library(targets)
-tar_load_everything(, store = here::here("_targets"))
+library(MAHERYCohortHarmonization)
+tar_load_everything(strict=FALSE, store = here::here("_targets"))
 ```
 
 In this vignette, we provide interactive tables to view the outputs of the pipeline. The tables are rendered using the `DT` package, which provides a simple way to create interactive tables in R.
@@ -44,6 +45,15 @@ or legal interpretation. The targets object `cohort_2018_households` is what gen
 
 ```{r, results='asis'}
 datatable(cohort_2018_households)
+```
+
+## Cohort 2018 Health Diagnoses Lookup Table
+The health diagnoses lookup table is an important part of the project. It provides a mapping between the local
+Malagasy survey answers and the standardized health diagnoses codes used in the project.
+
+```{r, results='asis'}
+data("malagasy_diagnosis_lookup_table", package = "MAHERYCohortHarmonization")
+datatable(malagasy_diagnosis_lookup_table)
 ```
 
 ## Pipeline
