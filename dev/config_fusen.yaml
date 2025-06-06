@@ -84,6 +84,21 @@ flat_preprocess_2018_health.Rmd:
     overwrite: ask
     clean: ask
     codecov: false
+flat_reporting_pins.Rmd:
+  path: dev/flat_reporting_pins.Rmd
+  state: active
+  R: R/to_pinboard.R
+  tests: tests/testthat/test-to_pinboard.R
+  vignettes: vignettes/reporting-with-pins-and-google-drive.Rmd
+  inflate:
+    flat_file: dev/flat_reporting_pins.Rmd
+    vignette_name: Reporting with pins and Google Drive
+    open_vignette: false
+    check: false
+    document: true
+    overwrite: ask
+    clean: ask
+    codecov: false
 flat_tracking_inputs.Rmd:
   path: dev/flat_tracking_inputs.Rmd
   state: active

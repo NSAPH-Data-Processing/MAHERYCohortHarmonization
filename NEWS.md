@@ -1,5 +1,16 @@
 <!-- NEWS.md is maintained by https://cynkra.github.io/fledge, do not edit -->
 
+# MAHERYCohortHarmonization 1.0.0 (2025-06-06)
+
+This major update introduces and closes the first milestone of the package [NSAPH-Data-Processing/MAHERYCohortHarmonization#3](https://github.com/NSAPH-Data-Processing/MAHERYCohortHarmonization/issues/3).
+
+In it, we have developed a reproducible analysis package for the MAHERY cohort harmonization project, which includes:
+- A comprehensive set of functions for data preprocessing, cleaning, and harmonization.
+- A standardized lookup table for health diagnoses.
+- Documentation and vignettes to guide users through the package functionalities.
+
+Below is a summary of key commits:
+
 - Introduced the `preprocess_2018_health` function to streamline health data processing.
 - Introduced new functions `clean_2018_pregnancy` and `clean_2018_vaccinations` with corresponding documentation and tests.
 - Improved the `create_health_diagnoses` function documentation to clarify its purpose and output.
@@ -19,4 +30,4 @@
 
 # MAHERYCohortHarmonization (development version)
 
-* Initial CRAN submission.
+* Initial commit tracking with `fledge`.

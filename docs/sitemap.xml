@@ -9,6 +9,7 @@
 <url><loc>/articles/opensrp-cohort-2018-preprocessing.html</loc></url>
 <url><loc>/articles/preprocessing-2018-health-status.html</loc></url>
 <url><loc>/articles/preprocessing-2018-household-heads.html</loc></url>
+<url><loc>/articles/reporting-with-pins-and-google-drive.html</loc></url>
 <url><loc>/articles/tracking-input-data.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
@@ -41,5 +42,6 @@
 <url><loc>/reference/preprocess_opensrp2018.html</loc></url>
 <url><loc>/reference/recode_opensrp_education.html</loc></url>
 <url><loc>/reference/sub_median.html</loc></url>
+<url><loc>/reference/to_pinboard.html</loc></url>
 </urlset>
 
