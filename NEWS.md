@@ -1,5 +1,17 @@
 <!-- NEWS.md is maintained by https://cynkra.github.io/fledge, do not edit -->
 
+# MAHERYCohortHarmonization 1.1.0 (2025-06-06)
+
+- Implemented `to_pinboard` function to standardize uploads of R objects and files to a Google Drive pin board or shared folder.
+- Added documentation for the `to_pinboard` function, including parameters and examples.
+- Created a new R Markdown file `flat_reporting_pins.Rmd` to serve as a template for reporting with the `pins` package.
+- Updated configuration in `config_fusen.yaml` to include new R script and tests.
+- Added tests for the `to_pinboard` function in `test-to_pinboard.R`.
+- Created a vignette `reporting-with-pins-and-google-drive.Rmd` to demonstrate usage of the `to_pinboard` function.
+- Updated various documentation files to reflect the new version 1.0.0 of the package.
+- Added images for demonstration purposes in the vignette.
+
+
 # MAHERYCohortHarmonization 1.0.0 (2025-06-06)
 
 This major update introduces and closes the first milestone of the package [NSAPH-Data-Processing/MAHERYCohortHarmonization#3](https://github.com/NSAPH-Data-Processing/MAHERYCohortHarmonization/issues/3).

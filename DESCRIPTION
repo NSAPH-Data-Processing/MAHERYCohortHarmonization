@@ -1,6 +1,6 @@
 Package: MAHERYCohortHarmonization
 Title: MAHERY Cohort Harmonization
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: 
     person("Tinashe", "Tapera", , "ttapera@hsph.harvard.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0000-0000-0000"))
