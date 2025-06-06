@@ -12,6 +12,7 @@
     "r.alwaysUseActiveTerminal": true,
     "r.lsp.path": "/usr/local/bin/R",
     "r.rpath.linux": "/n/sw/helmod-rocky8/apps/Core/R/4.4.3-fasrc01/bin/R",
+    "python.terminal.activateEnvInCurrentTerminal": true,
     //"r.libPaths": [
         //"/home/rstudio/.cache/R/renv/library/MAHERYCohortHarmonization-947985a6/linux-ubuntu-noble/R-4.4/aarch64-unknown-linux-gnu",
         //"/home/rstudio/.cache/R/renv/sandbox/linux-ubuntu-noble/R-4.4/aarch64-unknown-linux-gnu/25ebdc09"
